@@ -1,0 +1,288 @@
+
+/* Reset e fonte */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  /* Fundo da tela principal: cinza e contraste /* Cor padrão de texto (usada no formulário)*/
+  background-color: #111111; 
+  color: #111111; 
+  height: 100vh;
+}
+
+/* Container geral para as páginas (coluna esquerda azul + direita formulário) */
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+/* 2. COLUNA ESQUERDA (AZUL) */
+.left-side {
+  flex: 1;
+  background-color: #4A69FF;
+  padding: 40px 20px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* Conteúdo vai pro topo */
+  /* Alinha o conteúdo (texto) à esquerda */
+  align-items: flex-start; 
+  text-align: left;
+  overflow: hidden;
+  color: #ffffff; 
+}
+
+/* Título de boas-vindas */
+.left-side h1 {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-top: 60px; 
+  margin-bottom: 10px;
+  z-index: 2;
+}
+
+/* Subtexto */
+.left-side .subtexto {
+  font-size: 1rem;
+  color: #e1e1ff;
+  max-width: 350px;
+  line-height: 1.5;
+  z-index: 2;
+}
+
+/* img do cadastro */
+.left-side img {
+  position: absolute;
+  bottom: 0; 
+  left: 0px; 
+  width: 150px; 
+  height: auto;
+  z-index: 1;
+  object-fit: contain;
+}
+
+/* 3. COLUNA DIREITA (formulário e fundo branco) */
+.right-side {
+  flex: 1;
+  background-color: #FFFFFF;
+  padding: 50px 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Título da seção */
+.right-side h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 30px;
+  color: #111111; 
+}
+
+/* Formulários */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* Input group lado a lado (usado no cadastro) */
+.input-group {
+  display: flex;
+  gap: 20px;
+}
+
+.input-box input { 
+  width: 100%; 
+  box-sizing: border-box;
+}
+
+.input-box {
+  width: 100%;
+  margin-bottom: 20px; 
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* Labels */
+label {
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #111111;
+  font-size: 1rem;
+}
+
+/* Input com ícone à esquerda */
+.input-icon {
+  position: relative;
+}
+
+.input-icon i {
+  position: absolute;
+  top: 50%;
+  left: 13px;
+  transform: translateY(-50%);
+  color: #555555; 
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+
+/* Inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  padding: 14px 15px 14px 40px;
+  border-radius: 12px;
+  border: none;
+  background-color: #EEEEEE; 
+  color: #111111; 
+  font-size: 1rem;
+  outline: none;
+  transition: background-color 0.3s ease;
+}
+
+input::placeholder {
+  color: #777777; 
+  font-style: italic;
+  opacity: 1;
+}
+
+input:focus {
+  background-color: #DDDDDD;
+}
+
+/* Parágrafos e links, cor destaque*/
+.termos {
+  font-size: 0.9rem;
+  color: #555555;
+}
+
+.termos a,
+.voltar-login a,
+.login-link a,
+.create-account a {
+  color: #45bfbf; 
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Botões padrão, cor destaque*/
+button {
+  border-radius: 12px;
+  padding: 15px 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.3s ease;
+  background-color: #45bfbf; 
+  color: white;
+}
+
+button:hover {
+  background-color: #cc6633;
+}
+
+/* Flex para checkbox e esqueceu a senha */
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  color: #111111;
+  width: 100%; 
+}
+
+/* Link (Esqueceu a senha?) */
+.flex-between a {
+  color:#45bfbf ;
+  text-decoration: none;
+}
+
+.flex-between a:hover {
+  color: #cc6633;
+}
+
+.flex-between label {
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+}
+
+.flex-between input[type="checkbox"] {
+  margin-right: 8px;
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+  accent-color: #FF793F;
+}
+
+/* Botões sociais do login */
+.social-login p {
+  margin-bottom: 15px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.social-buttons {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+}
+
+.social-buttons button {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  border: none;
+  background-color: #EEEEEE;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  box-shadow: 0 2px 7px rgba(0,0,0,0.1); 
+  transition: transform 0.2s ease;
+}
+
+.social-buttons button:hover {
+  transform: scale(1.1);
+}
+
+/* Estiliza os ícones */
+.social-buttons button i {
+  color: #111111; 
+  font-size: 1.2rem;
+}
+
+/* Texto pequenino para voltar ao login na recuperar senha */
+.voltar-login {
+  margin-top: 25px;
+  font-size: 0.95rem;
+  text-align: center;
+  color: #555555; 
+}
+/*responsividade */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .left-side,
+  .right-side {
+    width: 100%;
+    padding: 30px 20px;
+  }
+
+  .input-group {
+    flex-direction: column;
+  }
+}
