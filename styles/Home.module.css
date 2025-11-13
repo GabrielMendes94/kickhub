@@ -1,168 +1,288 @@
-.page {
-  --gray-rgb: 0, 0, 0;
-  --gray-alpha-200: rgba(var(--gray-rgb), 0.08);
-  --gray-alpha-100: rgba(var(--gray-rgb), 0.05);
-
-  --button-primary-hover: #383838;
-  --button-secondary-hover: #f2f2f2;
-
-  display: grid;
-  grid-template-rows: 20px 1fr 20px;
-  align-items: center;
-  justify-items: center;
-  min-height: 100svh;
-  padding: 80px;
-  gap: 64px;
-  font-family: var(--font-geist-sans);
+:global(*) {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  .page {
-    --gray-rgb: 255, 255, 255;
-    --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
-    --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
-
-    --button-primary-hover: #ccc;
-    --button-secondary-hover: #1a1a1a;
-  }
+:global(body) {
+  background-color: #111111;
+  color: #111111;
+  height: 100vh;
 }
 
-.main {
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+.leftSide {
+  flex: 1;
+  background-color: #4A69FF;
+  padding: 40px 20px;
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  grid-row-start: 2;
+  justify-content: flex-start;
+  align-items: flex-start;
+  text-align: left;
+  overflow: hidden;
+  color: #ffffff;
 }
 
-.main ol {
-  font-family: var(--font-geist-mono);
-  padding-left: 0;
-  margin: 0;
-  font-size: 14px;
-  line-height: 24px;
-  letter-spacing: -0.01em;
-  list-style-position: inside;
+.leftSide h1 {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-top: 60px;
+  margin-bottom: 10px;
+  z-index: 2;
 }
 
-.main li:not(:last-of-type) {
-  margin-bottom: 8px;
+.leftSide .subtexto {
+  font-size: 1rem;
+  color: #e1e1ff;
+  max-width: 350px;
+  line-height: 1.5;
+  z-index: 2;
 }
 
-.main code {
-  font-family: inherit;
-  background: var(--gray-alpha-100);
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-weight: 600;
+.leftSide img {
+  position: absolute;
+  bottom: 0;
+  left: 0px;
+  width: 150px;
+  height: auto;
+  z-index: 1;
+  object-fit: contain;
 }
 
-.ctas {
+.rightSide {
+  flex: 1;
+  background-color: #FFFFFF;
+  padding: 50px 60px;
   display: flex;
-  gap: 16px;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.ctas a {
-  appearance: none;
-  border-radius: 128px;
-  height: 48px;
-  padding: 0 20px;
+.rightSide h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 30px;
+  color: #111111;
+}
+
+/* escopo para forms dentro do right-side */
+.rightSide form {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.inputGroup {
+  display: flex;
+  gap: 20px;
+}
+
+.inputBox input { 
+  width: 100%; 
+  box-sizing: border-box;
+}
+
+.inputBox {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+/* labels escopados dentro da coluna direita */
+.rightSide label {
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #111111;
+  font-size: 1rem;
+}
+
+.inputIcon {
+  position: relative;
+}
+
+.inputIcon i {
+  position: absolute;
+  top: 50%;
+  left: 13px;
+  transform: translateY(-50%);
+  color: #555555;
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+
+/* inputs escopados dentro de .inputBox para serem selectors locais */
+.inputBox input[type="text"],
+.inputBox input[type="email"],
+.inputBox input[type="password"] {
+  padding: 14px 15px 14px 40px;
+  border-radius: 12px;
   border: none;
-  border: 1px solid transparent;
-  transition:
-    background 0.2s,
-    color 0.2s,
-    border-color 0.2s;
+  background-color: #EEEEEE; 
+  color: #111111; 
+  font-size: 1rem;
+  outline: none;
+  transition: background-color 0.3s ease;
+}
+
+.inputBox input::placeholder {
+  color: #777777; 
+  font-style: italic;
+  opacity: 1;
+}
+
+.inputBox input:focus {
+  background-color: #DDDDDD;
+}
+
+.termos {
+  font-size: 0.9rem;
+  color: #555555;
+}
+.termos a:hover {
+  color: #cc6633;
+}
+
+/* parágrafo descritivo na página de recuperar senha */
+.descricaoRecuperar {
+  font-size: 0.95rem;
+  color: #555555;
+  margin-bottom: 18px;
+}
+
+.termos a,
+.voltarLogin a,
+.loginLink a,
+.createAccount a {
+  color: #45bfbf;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.createAccount a:hover {
+  color: #cc6633;
+}
+.loginLink a:hover {
+  color: #cc6633;
+}
+
+/* botões dentro da coluna direita (escopo local) */
+.rightSide button {
+  border-radius: 12px;
+  padding: 15px 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.3s ease;
+  background-color: #45bfbf; 
+  color: white;
+}
+
+.rightSide button:hover {
+  background-color: #cc6633;
+}
+
+.flexBetween {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  color: #111111;
+  width: 100%;
+}
+
+.flexBetween a {
+  color: #45bfbf;
+  text-decoration: none;
+}
+
+.flexBetween a:hover {
+  color: #cc6633;
+}
+
+.flexBetween label {
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+}
+
+.flexBetween input[type="checkbox"] {
+  margin-right: 8px;
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+  accent-color: #FF793F;
+}
+
+.socialLogin p {
+  margin-bottom: 15px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.socialButtons {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+}
+
+.socialButtons button {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  border: none;
+  background-color: #EEEEEE;
   cursor: pointer;
   display: flex;
-  align-items: center;
   justify-content: center;
-  font-size: 16px;
-  line-height: 20px;
-  font-weight: 500;
-}
-
-a.primary {
-  background: var(--foreground);
-  color: var(--background);
-  gap: 8px;
-}
-
-a.secondary {
-  border-color: var(--gray-alpha-200);
-  min-width: 158px;
-}
-
-.footer {
-  grid-row-start: 3;
-  display: flex;
-  gap: 24px;
-}
-
-.footer a {
-  display: flex;
   align-items: center;
-  gap: 8px;
+  padding: 0;
+  box-shadow: 0 2px 7px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
 }
 
-.footer img {
-  flex-shrink: 0;
+.socialButtons button:hover {
+  transform: scale(1.1);
 }
 
-/* Enable hover only on non-touch devices */
-@media (hover: hover) and (pointer: fine) {
-  a.primary:hover {
-    background: var(--button-primary-hover);
-    border-color: transparent;
-  }
-
-  a.secondary:hover {
-    background: var(--button-secondary-hover);
-    border-color: transparent;
-  }
-
-  .footer a:hover {
-    text-decoration: underline;
-    text-underline-offset: 4px;
-  }
+.socialButtons button i {
+  color: #111111;
+  font-size: 1.2rem;
 }
 
-@media (max-width: 600px) {
-  .page {
-    padding: 32px;
-    padding-bottom: 80px;
-  }
+.voltarLogin {
+  margin-top: 25px;
+  font-size: 0.95rem;
+  text-align: center;
+  color: #555555;
+}
+.voltarLogin a:hover {
+  color: #cc6633;
+}
 
-  .main {
-    align-items: center;
-  }
-
-  .main ol {
-    text-align: center;
-  }
-
-  .ctas {
+@media (max-width: 768px) {
+  .container {
     flex-direction: column;
   }
 
-  .ctas a {
-    font-size: 14px;
-    height: 40px;
-    padding: 0 16px;
+  .leftSide,
+  .rightSide {
+    width: 100%;
+    padding: 30px 20px;
   }
 
-  a.secondary {
-    min-width: auto;
-  }
-
-  .footer {
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .logo {
-    filter: invert();
+  .inputGroup {
+    flex-direction: column;
   }
 }
