@@ -1,5 +1,4 @@
 import Head from "next/head";
-import React, { useRef } from "react";
 import Link from "next/link";
 import {
   Box,
@@ -9,14 +8,28 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  RecoverPasswordFormData,
+  recoverPasswordDefaultValues,
+  recoverPasswordSchema,
+} from "@/validation/authSchemas";
 
 export default function RecuperarSenha() {
-  const formRef = useRef<HTMLFormElement | null>(null);
+  const {
+    handleSubmit,
+    register,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<RecoverPasswordFormData>({
+    resolver: zodResolver(recoverPasswordSchema),
+    defaultValues: recoverPasswordDefaultValues,
+  });
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    alert("Código de verificação enviado ao email (simulado).");
-    formRef.current?.reset();
+  function handleRecover(data: RecoverPasswordFormData) {
+    alert(`Código enviado para ${data.email} (simulado).`);
+    reset();
   }
 
   return (
@@ -71,8 +84,8 @@ export default function RecuperarSenha() {
             <Box
               component="form"
               id="form-recuperar"
-              ref={formRef}
-              onSubmit={handleSubmit}
+              noValidate
+              onSubmit={handleSubmit(handleRecover)}
               sx={{
                 display: "flex",
                 flexDirection: "column",
@@ -96,15 +109,16 @@ export default function RecuperarSenha() {
 
               <TextField
                 id="email-recuperar"
-                name="email"
                 type="email"
                 label="E-mail"
                 placeholder="Digite seu e-mail"
                 autoComplete="email"
-                required
+                {...register("email")}
+                error={Boolean(errors.email)}
+                helperText={errors.email?.message}
               />
 
-              <Button type="submit" size="large" variant="contained">
+              <Button type="submit" size="large" variant="contained" disabled={isSubmitting}>
                 Continuar
               </Button>
 

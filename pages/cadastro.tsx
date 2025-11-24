@@ -1,5 +1,4 @@
 import Head from "next/head";
-import React, { useRef } from "react";
 import Link from "next/link";
 import {
   Box,
@@ -9,29 +8,28 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  SignupFormData,
+  signupDefaultValues,
+  signupSchema,
+} from "@/validation/authSchemas";
 
 export default function Cadastro() {
-  const formRef = useRef<HTMLFormElement | null>(null);
+  const {
+    handleSubmit,
+    register,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: signupDefaultValues,
+  });
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
-    const form = formRef.current;
-    if (!form) {
-      return;
-    }
-
-    const formData = new FormData(form);
-    const senha = (formData.get("senha") as string)?.trim();
-    const confirmar = (formData.get("confirmarSenha") as string)?.trim();
-
-    if (!senha || senha !== confirmar) {
-      alert("As senhas não coincidem! Tente novamente.");
-      return;
-    }
-
-    alert("Cadastro realizado com sucesso!");
-    form.reset();
+  function handleSignup(data: SignupFormData) {
+    alert(`Cadastro realizado com sucesso para ${data.firstName}!`);
+    reset();
   }
 
   return (
@@ -92,8 +90,8 @@ export default function Cadastro() {
             <Box
               component="form"
               id="form-cadastro"
-              ref={formRef}
-              onSubmit={handleSubmit}
+              noValidate
+              onSubmit={handleSubmit(handleSignup)}
               sx={{
                 display: "flex",
                 flexDirection: "column",
@@ -118,45 +116,55 @@ export default function Cadastro() {
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                 <TextField
                   id="primeiro-nome"
-                  name="primeiroNome"
                   label="Primeiro nome"
                   placeholder="Digite seu primeiro nome"
-                  required
+                  autoComplete="given-name"
+                  {...register("firstName")}
+                  error={Boolean(errors.firstName)}
+                  helperText={errors.firstName?.message}
                 />
                 <TextField
                   id="sobrenome"
-                  name="sobrenome"
                   label="Sobrenome"
                   placeholder="Digite seu sobrenome"
-                  required
+                  autoComplete="family-name"
+                  {...register("lastName")}
+                  error={Boolean(errors.lastName)}
+                  helperText={errors.lastName?.message}
                 />
               </Stack>
 
               <TextField
                 id="email-cadastro"
-                name="email"
                 type="email"
                 label="E-mail"
                 placeholder="Digite seu e-mail"
-                required
+                autoComplete="email"
+                {...register("email")}
+                error={Boolean(errors.email)}
+                helperText={errors.email?.message}
               />
 
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                 <TextField
                   id="senha-cadastro"
-                  name="senha"
                   type="password"
                   label="Senha"
                   placeholder="Digite a senha"
-                  required
+                  autoComplete="new-password"
+                  {...register("password")}
+                  error={Boolean(errors.password)}
+                  helperText={errors.password?.message}
                 />
                 <TextField
                   id="confirmar-senha"
-                  name="confirmarSenha"
                   type="password"
                   label="Confirmar senha"
                   placeholder="Confirme a senha"
-                  required
+                  autoComplete="new-password"
+                  {...register("confirmPassword")}
+                  error={Boolean(errors.confirmPassword)}
+                  helperText={errors.confirmPassword?.message}
                 />
               </Stack>
 
@@ -168,7 +176,7 @@ export default function Cadastro() {
                 .
               </Typography>
 
-              <Button type="submit" size="large" variant="contained">
+              <Button type="submit" size="large" variant="contained" disabled={isSubmitting}>
                 Criar conta
               </Button>
 

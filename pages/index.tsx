@@ -1,6 +1,5 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useRef } from "react";
 import {
   Box,
   Button,
@@ -15,14 +14,29 @@ import {
 } from "@mui/material";
 import GoogleIcon from "@mui/icons-material/Google";
 import FacebookIcon from "@mui/icons-material/Facebook";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  LoginFormData,
+  loginDefaultValues,
+  loginSchema,
+} from "@/validation/authSchemas";
 
 export default function Home() {
-  const formLoginRef = useRef<HTMLFormElement | null>(null);
+  const {
+    control,
+    handleSubmit,
+    register,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: loginDefaultValues,
+  });
 
-  function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    alert("Login efetuado com sucesso (simulado).");
-    formLoginRef.current?.reset();
+  function handleLogin(data: LoginFormData) {
+    alert(`Login efetuado com sucesso (simulado) para ${data.email}.`);
+    reset();
   }
 
   return (
@@ -84,8 +98,8 @@ export default function Home() {
             <Box
               component="form"
               id="form-login"
-              ref={formLoginRef}
-              onSubmit={handleLogin}
+              noValidate
+              onSubmit={handleSubmit(handleLogin)}
               sx={{
                 display: "flex",
                 flexDirection: "column",
@@ -112,7 +126,10 @@ export default function Home() {
                 type="email"
                 label="E-mail"
                 placeholder="Digite seu e-mail"
-                required
+                autoComplete="email"
+                {...register("email")}
+                error={Boolean(errors.email)}
+                helperText={errors.email?.message}
               />
 
               <TextField
@@ -120,11 +137,30 @@ export default function Home() {
                 type="password"
                 label="Senha"
                 placeholder="Digite sua senha"
-                required
+                autoComplete="current-password"
+                {...register("password")}
+                error={Boolean(errors.password)}
+                helperText={errors.password?.message}
               />
 
               <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems="center" gap={1}>
-                <FormControlLabel control={<Checkbox id="lembrar-me" color="primary" />} label="Lembrar de mim" />
+                <Controller
+                  name="rememberMe"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          id="lembrar-me"
+                          color="primary"
+                          checked={field.value}
+                          onChange={(event) => field.onChange(event.target.checked)}
+                        />
+                      }
+                      label="Lembrar de mim"
+                    />
+                  )}
+                />
                 <MuiLink
                   component={Link}
                   href="/recuperar-senha"
@@ -137,7 +173,7 @@ export default function Home() {
                 </MuiLink>
               </Stack>
 
-              <Button type="submit" size="large" variant="contained">
+              <Button type="submit" size="large" variant="contained" disabled={isSubmitting}>
                 Entrar
               </Button>
 
