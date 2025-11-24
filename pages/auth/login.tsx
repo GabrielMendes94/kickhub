@@ -1,9 +1,12 @@
 import Head from "next/head";
 import Link from "next/link";
+import { useState } from "react";
 import {
+  Alert,
   Box,
   Button,
   Checkbox,
+  CircularProgress,
   Divider,
   FormControlLabel,
   IconButton,
@@ -11,6 +14,7 @@ import {
   Stack,
   TextField,
   Typography,
+  Collapse,
 } from "@mui/material";
 import GoogleIcon from "@mui/icons-material/Google";
 import FacebookIcon from "@mui/icons-material/Facebook";
@@ -23,6 +27,7 @@ import {
 } from "@/validation/authSchemas";
 
 export default function Login() {
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const {
     control,
     handleSubmit,
@@ -34,8 +39,10 @@ export default function Login() {
     defaultValues: loginDefaultValues,
   });
 
-  function handleLogin(data: LoginFormData) {
-    alert(`Login efetuado com sucesso (simulado) para ${data.email}.`);
+  async function handleLogin(data: LoginFormData) {
+    setSuccessMessage(null);
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    setSuccessMessage(`Login efetuado com sucesso para ${data.email}.`);
     reset();
   }
 
@@ -173,9 +180,25 @@ export default function Login() {
                 </MuiLink>
               </Stack>
 
-              <Button type="submit" size="large" variant="contained" disabled={isSubmitting}>
-                Entrar
+              <Button
+                type="submit"
+                size="large"
+                variant="contained"
+                disabled={isSubmitting}
+                startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : null}
+              >
+                {isSubmitting ? "Entrando..." : "Entrar"}
               </Button>
+
+              <Collapse in={Boolean(successMessage)}>
+                <Alert
+                  severity="success"
+                  onClose={() => setSuccessMessage(null)}
+                  sx={{ borderRadius: 2 }}
+                >
+                  {successMessage}
+                </Alert>
+              </Collapse>
 
               <Divider>Ou entre com</Divider>
               <Stack direction="row" spacing={2} justifyContent="center">

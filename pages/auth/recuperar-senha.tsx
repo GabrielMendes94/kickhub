@@ -1,12 +1,16 @@
 import Head from "next/head";
 import Link from "next/link";
+import { useState } from "react";
 import {
+  Alert,
   Box,
   Button,
+  CircularProgress,
   Link as MuiLink,
   Stack,
   TextField,
   Typography,
+  Collapse,
 } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +21,7 @@ import {
 } from "@/validation/authSchemas";
 
 export default function RecuperarSenha() {
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const {
     handleSubmit,
     register,
@@ -27,8 +32,10 @@ export default function RecuperarSenha() {
     defaultValues: recoverPasswordDefaultValues,
   });
 
-  function handleRecover(data: RecoverPasswordFormData) {
-    alert(`Código enviado para ${data.email} (simulado).`);
+  async function handleRecover(data: RecoverPasswordFormData) {
+    setSuccessMessage(null);
+    await new Promise((resolve) => setTimeout(resolve, 1400));
+    setSuccessMessage(`Enviamos um código para ${data.email}.`);
     reset();
   }
 
@@ -118,9 +125,25 @@ export default function RecuperarSenha() {
                 helperText={errors.email?.message}
               />
 
-              <Button type="submit" size="large" variant="contained" disabled={isSubmitting}>
-                Continuar
+              <Button
+                type="submit"
+                size="large"
+                variant="contained"
+                disabled={isSubmitting}
+                startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : null}
+              >
+                {isSubmitting ? "Enviando..." : "Continuar"}
               </Button>
+
+              <Collapse in={Boolean(successMessage)}>
+                <Alert
+                  severity="success"
+                  onClose={() => setSuccessMessage(null)}
+                  sx={{ borderRadius: 2 }}
+                >
+                  {successMessage}
+                </Alert>
+              </Collapse>
 
               <Typography textAlign="center" color="text.secondary">
                 <MuiLink component={Link} href="/auth/login" underline="none">

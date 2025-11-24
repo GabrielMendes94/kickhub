@@ -2,7 +2,7 @@
 Sistema web de gerenciamento de ponto.
 
 ### Principais funcionalidades
-- Telas de Login, Cadastro e Recuperação organizadas em `pages/auth/*`.
+- Telas de Login, Cadastro e Recuperação de senha organizadas em `pages/auth/*`.
 - Layout responsivo utilizando Material UI (MUI) e tema customizado (`theme/index.ts`).
 - Validação de formulários com `react-hook-form` + `zod`, incluindo mensagens de erro em português.
 
@@ -44,8 +44,3 @@ npm run start           # sobe o build gerado em modo produção
 2. Ajuste componentes dentro de `pages/auth/*` ou o tema em `theme/index.ts`.
 3. Para validar formulários, edite `validation/authSchemas.ts` (as mensagens aparecem automaticamente nas telas).
 4. Antes de subir alterações, execute `npm run build` para garantir que tipos e lint passam.
-
-### Próximos passos sugeridos
-- Expandir o fluxo de autenticação real integrando uma API.
-- Adicionar testes (unitários ou e2e) para fluxos críticos.
-- Implementar estados reais (feedbacks de loading/sucesso) nos formulários.

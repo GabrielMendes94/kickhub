@@ -1,12 +1,16 @@
 import Head from "next/head";
 import Link from "next/link";
+import { useState } from "react";
 import {
+  Alert,
   Box,
   Button,
+  CircularProgress,
   Link as MuiLink,
   Stack,
   TextField,
   Typography,
+  Collapse,
 } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +21,7 @@ import {
 } from "@/validation/authSchemas";
 
 export default function Cadastro() {
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const {
     handleSubmit,
     register,
@@ -27,8 +32,10 @@ export default function Cadastro() {
     defaultValues: signupDefaultValues,
   });
 
-  function handleSignup(data: SignupFormData) {
-    alert(`Cadastro realizado com sucesso para ${data.firstName}!`);
+  async function handleSignup(data: SignupFormData) {
+    setSuccessMessage(null);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    setSuccessMessage(`Conta criada com sucesso para ${data.firstName}.`);
     reset();
   }
 
@@ -176,9 +183,25 @@ export default function Cadastro() {
                 .
               </Typography>
 
-              <Button type="submit" size="large" variant="contained" disabled={isSubmitting}>
-                Criar conta
+              <Button
+                type="submit"
+                size="large"
+                variant="contained"
+                disabled={isSubmitting}
+                startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : null}
+              >
+                {isSubmitting ? "Enviando..." : "Criar conta"}
               </Button>
+
+              <Collapse in={Boolean(successMessage)}>
+                <Alert
+                  severity="success"
+                  onClose={() => setSuccessMessage(null)}
+                  sx={{ borderRadius: 2 }}
+                >
+                  {successMessage}
+                </Alert>
+              </Collapse>
 
               <Typography textAlign="center" color="text.secondary">
                 Já possui uma conta? {" "}
