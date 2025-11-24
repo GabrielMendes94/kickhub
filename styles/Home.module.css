@@ -18,7 +18,7 @@
 
 .leftSide {
   flex: 1;
-  background-color: #4A69FF;
+  background: linear-gradient(180deg, #65E33F 0%, #387D23 100%);
   padding: 40px 20px;
   position: relative;
   display: flex;
