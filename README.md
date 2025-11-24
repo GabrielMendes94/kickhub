@@ -3,6 +3,7 @@ Sistema web de gerenciamento de ponto.
 
 ### Principais funcionalidades
 - Telas de Login, Cadastro e Recuperação de senha organizadas em `pages/auth/*`.
+- Fluxos de ponto: bater (`/ponto/bater`), corrigir (`/ponto/corrigir`) e listar status (`/ponto/status`).
 - Layout responsivo utilizando Material UI (MUI) e tema customizado (`theme/index.ts`).
 - Validação de formulários com `react-hook-form` + `zod`, incluindo mensagens de erro em português.
 
@@ -22,9 +23,14 @@ pages/
 		login.tsx
 		cadastro.tsx
 		recuperar-senha.tsx
+	ponto/
+		bater.tsx
+		corrigir.tsx
+		status.tsx
 styles/globals.css      # Reset/base global
 theme/index.ts          # Tema MUI
 validation/authSchemas.ts
+validation/pontoSchemas.ts
 ```
 
 ### Pré-requisitos

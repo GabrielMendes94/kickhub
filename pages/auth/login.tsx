@@ -1,5 +1,6 @@
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import {
   Alert,
@@ -25,9 +26,11 @@ import {
   loginDefaultValues,
   loginSchema,
 } from "@/validation/authSchemas";
+import { setAuthFlag } from "@/utils/auth";
 
 export default function Login() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const router = useRouter();
   const {
     control,
     handleSubmit,
@@ -44,6 +47,8 @@ export default function Login() {
     await new Promise((resolve) => setTimeout(resolve, 1200));
     setSuccessMessage(`Login efetuado com sucesso para ${data.email}.`);
     reset();
+    setAuthFlag();
+    router.push("/ponto/bater");
   }
 
   return (
