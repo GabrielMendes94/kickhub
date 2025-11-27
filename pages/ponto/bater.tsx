@@ -1,24 +1,15 @@
 import Head from "next/head";
-import Link from "next/link";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import type { JSX } from "react";
 
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Container,
-  Divider,
-  Link as MuiLink,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Card, CardContent, Container, Stack, Typography } from "@mui/material";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { clearAuthFlag } from "@/utils/auth";
 import { ActionTile } from "@/components/ActionTile";
 import { UserBadge } from "@/components/UserBadge";
+import { SummaryStatCard } from "@/components/ponto/SummaryStatCard";
+import { HistoryList } from "@/components/ponto/HistoryList";
 
 const RECIFE_TIMEZONE = "America/Recife";
 
@@ -176,6 +167,13 @@ const historyDotColors: Record<HistoryEntryType, string> = {
   retorno: "#3b82f6",
   saida: "#f87171",
 };
+
+const historyListEntries = historyEntries.map((entry) => ({
+  id: entry.id,
+  label: entry.label,
+  time: entry.time,
+  dotColor: historyDotColors[entry.type],
+}));
 
 function getRecifeTimeLabel() {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -388,9 +386,7 @@ export default function BaterPontoPage() {
                     <Typography variant="h6" fontWeight={700}>
                       Resumo do dia
                     </Typography>
-                    <Typography color="text.secondary">
-                      Visão rápida das suas marcações
-                    </Typography>
+                    <Typography color="text.secondary">Visão rápida das suas marcações</Typography>
                   </Box>
                   <Box
                     sx={{
@@ -404,43 +400,7 @@ export default function BaterPontoPage() {
                     }}
                   >
                     {daySummaryStats.map((stat) => (
-                      <Box
-                        key={stat.id}
-                        sx={{
-                          borderRadius: 3,
-                          border: "1px solid rgba(15,23,42,0.08)",
-                          p: 3,
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 2,
-                          background: "linear-gradient(180deg, rgba(101,227,63,0.08) 0%, rgba(56,125,35,0.05) 100%)",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            width: 56,
-                            height: 56,
-                            borderRadius: 2,
-                            border: "1px solid rgba(15,23,42,0.08)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "#387d23",
-                            backgroundColor: "#ffffff",
-                          }}
-                          aria-hidden="true"
-                        >
-                          {stat.icon}
-                        </Box>
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">
-                            {stat.label}
-                          </Typography>
-                          <Typography variant="h6" fontWeight={700} sx={{ color: "#111827" }}>
-                            {stat.value}
-                          </Typography>
-                        </Box>
-                      </Box>
+                      <SummaryStatCard key={stat.id} icon={stat.icon} label={stat.label} value={stat.value} />
                     ))}
                   </Box>
                 </Stack>
@@ -453,63 +413,12 @@ export default function BaterPontoPage() {
                   <Typography variant="h6" fontWeight={700}>
                     Histórico de hoje
                   </Typography>
-                  <Stack spacing={1.5}>
-                    {historyEntries.map((entry) => (
-                      <Box
-                        key={entry.id}
-                        sx={{
-                          display: "flex",
-                          flexDirection: { xs: "column", sm: "row" },
-                          justifyContent: "space-between",
-                          gap: { xs: 1.5, sm: 2 },
-                          p: 2,
-                          borderRadius: 2,
-                          border: "1px solid rgba(15,23,42,0.08)",
-                          alignItems: { xs: "flex-start", sm: "center" },
-                          textAlign: { xs: "left", sm: "left" },
-                        }}
-                      >
-                        <Stack
-                          direction="row"
-                          spacing={1.5}
-                          alignItems="center"
-                          justifyContent={{ xs: "center", sm: "flex-start" }}
-                        >
-                          <Box
-                            sx={{
-                              width: 12,
-                              height: 12,
-                              borderRadius: "50%",
-                              backgroundColor: historyDotColors[entry.type],
-                            }}
-                            aria-hidden="true"
-                          />
-                          <Typography fontWeight={600}>{entry.label}</Typography>
-                        </Stack>
-                        <Typography sx={{ color: "text.secondary", fontWeight: 600 }}>{entry.time}</Typography>
-                      </Box>
-                    ))}
-                  </Stack>
-
-                  <Divider />
-
-                  <Stack
-                    direction={{ xs: "column", sm: "row" }}
-                    spacing={2}
-                    alignItems={{ xs: "flex-start", sm: "center" }}
-                    justifyContent="space-between"
-                  >
-                    <Typography color="text.secondary">{todaySummary}</Typography>
-                    <MuiLink
-                      component={Link}
-                      href="/ponto/status"
-                      underline="none"
-                      fontWeight={700}
-                      sx={{ color: "#387d23" }}
-                    >
-                      Ver status completo
-                    </MuiLink>
-                  </Stack>
+                  <HistoryList
+                    entries={historyListEntries}
+                    summaryText={todaySummary}
+                    footerLinkLabel="Ver status completo"
+                    footerLinkHref="/ponto/status"
+                  />
                 </Stack>
               </CardContent>
             </Card>

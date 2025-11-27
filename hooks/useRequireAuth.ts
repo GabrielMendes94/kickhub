@@ -1,21 +1,28 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
 import { isAuthenticated } from "@/utils/auth";
 
 export function useRequireAuth() {
     const router = useRouter();
-    const [isAllowed, setIsAllowed] = useState(false);
+    const isRouterReady = router.isReady;
+
+    const isClientAuthenticated = useMemo(() => {
+        if (!isRouterReady) {
+            return false;
+        }
+
+        return isAuthenticated();
+    }, [isRouterReady]);
 
     useEffect(() => {
-        if (!router.isReady) return;
-
-        if (!isAuthenticated()) {
-            router.replace("/auth/login");
+        if (!isRouterReady) {
             return;
         }
 
-        setIsAllowed(true);
-    }, [router]);
+        if (!isClientAuthenticated) {
+            router.replace("/auth/login");
+        }
+    }, [router, isRouterReady, isClientAuthenticated]);
 
-    return isAllowed;
+    return isRouterReady && isClientAuthenticated;
 }

@@ -3,7 +3,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import {
-  Alert,
   Box,
   Button,
   Checkbox,
@@ -15,7 +14,6 @@ import {
   Stack,
   TextField,
   Typography,
-  Collapse,
 } from "@mui/material";
 import GoogleIcon from "@mui/icons-material/Google";
 import FacebookIcon from "@mui/icons-material/Facebook";
@@ -27,6 +25,10 @@ import {
   loginSchema,
 } from "@/validation/authSchemas";
 import { setAuthFlag } from "@/utils/auth";
+import { AuthLayout } from "@/components/auth/AuthLayout";
+import { AuthHeroPanel } from "@/components/auth/AuthHeroPanel";
+import { AuthFormCard } from "@/components/auth/AuthFormCard";
+import { FormSuccessAlert } from "@/components/auth/FormSuccessAlert";
 
 export default function Login() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -59,71 +61,10 @@ export default function Login() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <Box
-        component="main"
-        sx={{
-          minHeight: "100vh",
-          bgcolor: "background.default",
-          display: "flex",
-          py: { xs: 4, md: 0 },
-          px: { xs: 2, md: 0 },
-        }}
+      <AuthLayout
+        hero={<AuthHeroPanel title="Bem-vindo(a)!" description="Conecte-se para bater seu ponto, corrigir, justificar e acompanhar seu histórico." />}
       >
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          sx={{ flex: 1, width: "100%", gap: { xs: 4, md: 0 } }}
-        >
-          <Box
-            sx={{
-              flex: 1,
-              background: "linear-gradient(180deg, #65E33F 0%, #387D23 100%)",
-              color: "#ffffff",
-              p: { xs: 5, sm: 6, md: 10 },
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: { xs: "center", md: "flex-start" },
-              textAlign: { xs: "center", md: "left" },
-              gap: 3,
-            }}
-          >
-            <Typography variant="h1" sx={{ fontSize: { xs: "2rem", md: "2.5rem" } }}>
-              Bem-vindo(a)!
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ maxWidth: 420, color: "rgba(255,255,255,0.9)" }}
-            >
-              Conecte-se para bater seu ponto, corrigir, justificar e acompanhar seu histórico.
-            </Typography>
-          </Box>
-
-          <Box
-            sx={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              p: { xs: 3, sm: 4, md: 8 },
-            }}
-          >
-            <Box
-              component="form"
-              id="form-login"
-              noValidate
-              onSubmit={handleSubmit(handleLogin)}
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 3,
-                width: "100%",
-                maxWidth: 440,
-                bgcolor: "background.paper",
-                p: { xs: 3, sm: 4 },
-                borderRadius: 3,
-                boxShadow: { xs: "0 12px 25px rgba(0,0,0,0.08)", md: "0 20px 40px rgba(0,0,0,0.1)" },
-              }}
-            >
+        <AuthFormCard component="form" id="form-login" noValidate onSubmit={handleSubmit(handleLogin)} sx={{ maxWidth: 440 }}>
               <Box>
                 <Typography variant="h2" component="h1" gutterBottom>
                   Fazer Login
@@ -195,15 +136,7 @@ export default function Login() {
                 {isSubmitting ? "Entrando..." : "Entrar"}
               </Button>
 
-              <Collapse in={Boolean(successMessage)}>
-                <Alert
-                  severity="success"
-                  onClose={() => setSuccessMessage(null)}
-                  sx={{ borderRadius: 2 }}
-                >
-                  {successMessage}
-                </Alert>
-              </Collapse>
+              <FormSuccessAlert message={successMessage} onClose={() => setSuccessMessage(null)} />
 
               <Divider>Ou entre com</Divider>
               <Stack direction="row" spacing={2} justifyContent="center">
@@ -221,10 +154,8 @@ export default function Login() {
                   Crie sua conta
                 </MuiLink>
               </Typography>
-            </Box>
-          </Box>
-        </Stack>
-      </Box>
+        </AuthFormCard>
+      </AuthLayout>
     </>
   );
 }

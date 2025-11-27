@@ -23,7 +23,7 @@ import {
   ListItemText,
   Divider,
 } from "@mui/material";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -90,9 +90,9 @@ export default function CorrigirPontoPage() {
     handleSubmit: handleSubmitCorrection,
     register: registerCorrection,
     reset: resetCorrection,
-    watch: watchCorrection,
     formState: { errors: correctionErrors, isSubmitting: isSubmittingCorrection },
     setValue: setCorrectionValue,
+    control: correctionControl,
   } = useForm<CorrigirPontoFormData>({
     resolver: zodResolver(corrigirPontoSchema),
     defaultValues: corrigirPontoDefaultValues,
@@ -102,19 +102,25 @@ export default function CorrigirPontoPage() {
     handleSubmit: handleSubmitJustification,
     register: registerJustification,
     reset: resetJustification,
-    watch: watchJustification,
     formState: { errors: justificationErrors, isSubmitting: isSubmittingJustification },
+    control: justificationControl,
   } = useForm<JustificarPontoFormData>({
     resolver: zodResolver(justificarPontoSchema),
     defaultValues: justificarPontoDefaultValues,
   });
 
-  const watchedRecordId = watchCorrection("recordId");
+  const watchedRecordId = useWatch({
+    control: correctionControl,
+    name: "recordId",
+  });
   const selectedRecord = useMemo(() => {
     return MOCK_REGISTROS.find((reg) => reg.id === watchedRecordId);
   }, [watchedRecordId]);
 
-  const watchedAttachment = watchJustification("attachment");
+  const watchedAttachment = useWatch({
+    control: justificationControl,
+    name: "attachment",
+  });
   const attachmentName = watchedAttachment?.length
     ? watchedAttachment[0]?.name ?? "Documento selecionado"
     : "Nenhum documento selecionado";

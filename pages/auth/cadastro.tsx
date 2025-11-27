@@ -1,17 +1,7 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useState } from "react";
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Link as MuiLink,
-  Stack,
-  TextField,
-  Typography,
-  Collapse,
-} from "@mui/material";
+import { Box, Button, CircularProgress, Link as MuiLink, Stack, TextField, Typography } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -19,6 +9,10 @@ import {
   signupDefaultValues,
   signupSchema,
 } from "@/validation/authSchemas";
+import { AuthLayout } from "@/components/auth/AuthLayout";
+import { AuthHeroPanel } from "@/components/auth/AuthHeroPanel";
+import { AuthFormCard } from "@/components/auth/AuthFormCard";
+import { FormSuccessAlert } from "@/components/auth/FormSuccessAlert";
 
 export default function Cadastro() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -46,71 +40,17 @@ export default function Cadastro() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <Box
-        component="main"
-        sx={{
-          minHeight: "100vh",
-          bgcolor: "background.default",
-          display: "flex",
-          py: { xs: 4, md: 0 },
-          px: { xs: 2, md: 0 },
-        }}
+      <AuthLayout
+        hero={
+          <AuthHeroPanel
+            title="Bem-vindo(a)"
+            description="Preencha os dados para criar sua conta e começar sua jornada."
+            imageSrc="/images/personagem1-removebg-preview.png"
+            imageAlt="Personagem ilustrativo"
+          />
+        }
       >
-        <Stack direction={{ xs: "column", md: "row" }} sx={{ flex: 1, gap: { xs: 4, md: 0 } }}>
-          <Box
-            sx={{
-              flex: 1,
-              background: "linear-gradient(180deg, #65E33F 0%, #387D23 100%)",
-              color: "#ffffff",
-              p: { xs: 5, sm: 6, md: 10 },
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: { xs: "center", md: "flex-start" },
-              textAlign: { xs: "center", md: "left" },
-              gap: 3,
-            }}
-          >
-            <Typography variant="h1" sx={{ fontSize: { xs: "2.2rem", md: "2.7rem" } }}>
-              Bem-vindo(a)
-            </Typography>
-            <Typography variant="body1" sx={{ maxWidth: 420, color: "rgba(255,255,255,0.9)" }}>
-              Preencha os dados para criar sua conta e começar sua jornada.
-            </Typography>
-            <Box
-              component="img"
-              src="/images/personagem1-removebg-preview.png"
-              alt="Personagem ilustrativo"
-              sx={{ width: { xs: 160, md: 220 }, mt: 4, display: { xs: "none", sm: "block" } }}
-            />
-          </Box>
-
-          <Box
-            sx={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              p: { xs: 3, sm: 4, md: 8 },
-            }}
-          >
-            <Box
-              component="form"
-              id="form-cadastro"
-              noValidate
-              onSubmit={handleSubmit(handleSignup)}
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 3,
-                width: "100%",
-                maxWidth: 520,
-                bgcolor: "background.paper",
-                p: { xs: 3, sm: 4 },
-                borderRadius: 3,
-                boxShadow: { xs: "0 12px 25px rgba(0,0,0,0.08)", md: "0 20px 40px rgba(0,0,0,0.1)" },
-              }}
-            >
+        <AuthFormCard component="form" id="form-cadastro" noValidate onSubmit={handleSubmit(handleSignup)}>
               <Box>
                 <Typography variant="h2" component="h1" gutterBottom>
                   Cadastro
@@ -193,15 +133,7 @@ export default function Cadastro() {
                 {isSubmitting ? "Enviando..." : "Criar conta"}
               </Button>
 
-              <Collapse in={Boolean(successMessage)}>
-                <Alert
-                  severity="success"
-                  onClose={() => setSuccessMessage(null)}
-                  sx={{ borderRadius: 2 }}
-                >
-                  {successMessage}
-                </Alert>
-              </Collapse>
+              <FormSuccessAlert message={successMessage} onClose={() => setSuccessMessage(null)} />
 
               <Typography textAlign="center" color="text.secondary">
                 Já possui uma conta? {" "}
@@ -209,10 +141,8 @@ export default function Cadastro() {
                   Faça login
                 </MuiLink>
               </Typography>
-            </Box>
-          </Box>
-        </Stack>
-      </Box>
+        </AuthFormCard>
+      </AuthLayout>
     </>
   );
 }
