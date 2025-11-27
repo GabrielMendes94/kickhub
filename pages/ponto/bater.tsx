@@ -7,7 +7,6 @@ import type { JSX } from "react";
 import {
   Box,
   Button,
-  ButtonBase,
   Card,
   CardContent,
   Container,
@@ -16,9 +15,10 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { clearAuthFlag } from "@/utils/auth";
+import { ActionTile } from "@/components/ActionTile";
+import { UserBadge } from "@/components/UserBadge";
 
 const RECIFE_TIMEZONE = "America/Recife";
 
@@ -177,91 +177,6 @@ const historyDotColors: Record<HistoryEntryType, string> = {
   saida: "#f87171",
 };
 
-type ActionTileProps = {
-  title: string;
-  description?: string;
-  variant: QuickActionVariant;
-  icon?: QuickActionIcon;
-  href?: string;
-  onClick?: () => void;
-};
-
-function ActionTile({ title, description, variant, icon, href, onClick }: ActionTileProps) {
-  const content = (
-    <Stack
-      spacing={0.5}
-      alignItems={icon ? "center" : "flex-start"}
-      textAlign={icon ? "center" : "left"}
-      sx={{ width: "100%" }}
-    >
-      {icon ? (
-        <Box
-          sx={{
-            width: 56,
-            height: 56,
-            borderRadius: "50%",
-            border: "1px solid rgba(255,255,255,0.4)",
-            backgroundColor: alpha("#ffffff", 0.18),
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            mb: 0.5,
-            "& svg": {
-              width: 26,
-              height: 26,
-            },
-          }}
-          aria-hidden="true"
-        >
-          {actionIcons[icon]}
-        </Box>
-      ) : null}
-      <Typography variant="subtitle1" fontWeight={700} component="strong" sx={{ color: "#ffffff" }}>
-        {title}
-      </Typography>
-      {description ? (
-        <Typography variant="body2" sx={{ color: alpha("#ffffff", 0.85) }}>
-          {description}
-        </Typography>
-      ) : null}
-    </Stack>
-  );
-
-  const baseSx = {
-    width: "100%",
-    borderRadius: 3,
-    p: 3,
-    color: "#ffffff",
-    display: "flex",
-    flexDirection: "column" as const,
-    gap: 1,
-    textDecoration: "none",
-    alignItems: icon ? "center" : "flex-start",
-    textAlign: icon ? "center" : "left",
-    backgroundColor: quickActionColors[variant],
-    boxShadow: "0 12px 30px rgba(0,0,0,0.18)",
-    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-    "&:hover": {
-      transform: "translateY(-4px)",
-      boxShadow: "0 18px 40px rgba(0,0,0,0.25)",
-    },
-  };
-
-  if (href) {
-    return (
-      <ButtonBase component={Link} href={href} sx={baseSx} focusRipple>
-        {content}
-      </ButtonBase>
-    );
-  }
-
-  return (
-    <ButtonBase component="button" type="button" onClick={onClick} sx={baseSx} focusRipple>
-      {content}
-    </ButtonBase>
-  );
-}
-
 function getRecifeTimeLabel() {
   return new Intl.DateTimeFormat("pt-BR", {
     timeZone: RECIFE_TIMEZONE,
@@ -357,41 +272,7 @@ export default function BaterPontoPage() {
               </Box>
 
               <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-                <Stack
-                  direction="row"
-                  spacing={1.5}
-                  alignItems="center"
-                  sx={{
-                    backgroundColor: "rgba(255,255,255,0.25)",
-                    borderRadius: 50,
-                    px: 2,
-                    py: 1.5,
-                    backdropFilter: "blur(8px)",
-                    boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 50,
-                      height: 50,
-                      borderRadius: "50%",
-                      backgroundColor: "#1f2937",
-                      color: "#ffffff",
-                      fontWeight: 600,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {loggedUser.initials}
-                  </Box>
-                  <Box>
-                    <Typography fontWeight={600}>{loggedUser.name}</Typography>
-                    <Typography variant="body2" sx={{ color: "rgba(17,24,39,0.7)" }}>
-                      {loggedUser.role}
-                    </Typography>
-                  </Box>
-                </Stack>
+                <UserBadge initials={loggedUser.initials} name={loggedUser.name} role={loggedUser.role} />
 
                 <Button
                   type="button"
@@ -477,30 +358,21 @@ export default function BaterPontoPage() {
                             <ActionTile
                               title={pauseButtonLabel}
                               description={pauseButtonDescription}
-                              variant={pauseButtonVariant}
-                              icon={isOnBreak ? "retorno" : "pausa"}
+                              backgroundColor={quickActionColors[pauseButtonVariant]}
+                              icon={isOnBreak ? actionIcons.retorno : actionIcons.pausa}
                               onClick={handleToggleBreak}
                             />
                           </Box>
                         )}
 
                         <Box>
-                          {action.id === "justificar" ? (
-                            <ActionTile
-                              title={action.title}
-                              description={action.description}
-                              variant={action.variant}
-                              icon={action.icon}
-                              href="/ponto/corrigir"
-                            />
-                          ) : (
-                            <ActionTile
-                              title={action.title}
-                              description={action.description}
-                              variant={action.variant}
-                              icon={action.icon}
-                            />
-                          )}
+                          <ActionTile
+                            title={action.title}
+                            description={action.description}
+                            backgroundColor={quickActionColors[action.variant]}
+                            icon={action.icon ? actionIcons[action.icon] : undefined}
+                            href={action.id === "justificar" ? "/ponto/corrigir" : undefined}
+                          />
                         </Box>
                       </Fragment>
                     ))}
