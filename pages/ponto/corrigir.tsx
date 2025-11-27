@@ -22,6 +22,10 @@ import {
   ListItem,
   ListItemText,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -85,6 +89,7 @@ export default function CorrigirPontoPage() {
   const router = useRouter();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [justificationMessage, setJustificationMessage] = useState<string | null>(null);
+  const [isJustificationModalOpen, setJustificationModalOpen] = useState(false);
   const canRender = useRequireAuth();
   const {
     handleSubmit: handleSubmitCorrection,
@@ -143,6 +148,12 @@ export default function CorrigirPontoPage() {
     setJustificationMessage("Justificativa registrada para análise.");
     resetJustification(justificarPontoDefaultValues);
   }
+
+  const openJustificationModal = () => setJustificationModalOpen(true);
+  const closeJustificationModal = () => {
+    setJustificationModalOpen(false);
+    setJustificationMessage(null);
+  };
 
   if (!canRender) {
     return null;
@@ -226,6 +237,14 @@ export default function CorrigirPontoPage() {
                   <Typography color="text.secondary">
                     Escolha o registro e informe o novo horário com a justificativa adequada.
                   </Typography>
+                  <Button
+                    variant="outlined"
+                    color="success"
+                    onClick={openJustificationModal}
+                    sx={{ mt: 2, alignSelf: "flex-start", fontWeight: 700 }}
+                  >
+                    Justificar ausência
+                  </Button>
                 </Box>
 
                 <Box component="form" noValidate onSubmit={handleSubmitCorrection(handleCorrection)} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -316,105 +335,99 @@ export default function CorrigirPontoPage() {
               </CardContent>
             </Card>
 
-            <Card
-              sx={{
-                flex: 1,
-                borderRadius: 4,
-                boxShadow: "0px 25px 60px rgba(0,0,0,0.18)",
-                backgroundColor: "rgba(255,255,255,0.95)",
-                backdropFilter: "blur(8px)",
-              }}
-            >
-              <CardContent sx={{ p: { xs: 3, sm: 4 }, display: "flex", flexDirection: "column", gap: 3 }}>
-                <Box>
-                  <Typography variant="h5" component="h2" fontWeight={700} gutterBottom>
-                    Justificar ausência
-                  </Typography>
-                  <Typography color="text.secondary">
-                    Informe a data, descreva o motivo e anexe um documento para acelerar a aprovação.
-                  </Typography>
-                </Box>
+          </Stack>
 
-                <Box component="form" noValidate onSubmit={handleSubmitJustification(handleJustification)} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                  <TextField
-                    label="Data da ocorrência"
-                    type="date"
-                    InputLabelProps={{ shrink: true }}
-                    {...registerJustification("absenceDate")}
-                    error={Boolean(justificationErrors.absenceDate)}
-                    helperText={justificationErrors.absenceDate?.message}
-                  />
+          <Dialog open={isJustificationModalOpen} onClose={closeJustificationModal} fullWidth maxWidth="sm">
+            <DialogTitle fontWeight={700}>Justificar ausência</DialogTitle>
+            <DialogContent sx={{ pt: 1 }}>
+              <Typography color="text.secondary" sx={{ mb: 3 }}>
+                Informe a data, descreva o motivo e anexe um documento para acelerar a aprovação.
+              </Typography>
 
-                  <TextField
-                    label="Detalhes da justificativa"
-                    multiline
-                    minRows={4}
-                    placeholder="Conte-nos o que aconteceu"
-                    {...registerJustification("reason")}
-                    error={Boolean(justificationErrors.reason)}
-                    helperText={justificationErrors.reason?.message}
-                  />
+              <Box component="form" noValidate onSubmit={handleSubmitJustification(handleJustification)} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                <TextField
+                  label="Data da ocorrência"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  {...registerJustification("absenceDate")}
+                  error={Boolean(justificationErrors.absenceDate)}
+                  helperText={justificationErrors.absenceDate?.message}
+                />
 
-                  <Stack spacing={1}>
-                    <Button
-                      component="label"
-                      variant="outlined"
-                      color="inherit"
-                      sx={{
-                        alignSelf: { xs: "stretch", sm: "flex-start" },
-                        borderColor: "rgba(56, 125, 35, 0.5)",
-                        color: "#1f2937",
-                        fontWeight: 600,
-                        "&:hover": {
-                          borderColor: "#2e6f1d",
-                          backgroundColor: "rgba(56, 125, 35, 0.08)",
-                        },
-                      }}
-                    >
-                      Anexar documento
-                      <input type="file" hidden accept=".pdf,.jpg,.jpeg,.png" {...registerJustification("attachment")} />
-                    </Button>
-                    <Typography variant="caption" color="text.secondary">
-                      {attachmentName}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Formatos aceitos: PDF, JPG ou PNG (até 5MB).
-                    </Typography>
-                    {justificationErrors.attachment && (
-                      <Typography variant="caption" color="error">
-                        {justificationErrors.attachment.message}
-                      </Typography>
-                    )}
-                  </Stack>
+                <TextField
+                  label="Detalhes da justificativa"
+                  multiline
+                  minRows={4}
+                  placeholder="Conte-nos o que aconteceu"
+                  {...registerJustification("reason")}
+                  error={Boolean(justificationErrors.reason)}
+                  helperText={justificationErrors.reason?.message}
+                />
 
+                <Stack spacing={1}>
                   <Button
-                    type="submit"
-                    size="large"
-                    variant="contained"
-                    disabled={isSubmittingJustification}
-                    startIcon={isSubmittingJustification ? <CircularProgress size={18} color="inherit" /> : null}
+                    component="label"
+                    variant="outlined"
+                    color="inherit"
                     sx={{
-                      background: "linear-gradient(90deg, #65e33f 0%, #387d23 100%)",
-                      color: "#ffffff",
-                      fontWeight: 700,
-                      boxShadow: "0 12px 30px rgba(0,0,0,0.2)",
+                      alignSelf: { xs: "stretch", sm: "flex-start" },
+                      borderColor: "rgba(56, 125, 35, 0.5)",
+                      color: "#1f2937",
+                      fontWeight: 600,
                       "&:hover": {
-                        background: "linear-gradient(90deg, #58d034 0%, #2e6f1d 100%)",
+                        borderColor: "#2e6f1d",
+                        backgroundColor: "rgba(56, 125, 35, 0.08)",
                       },
                     }}
                   >
-                    {isSubmittingJustification ? "Enviando..." : "Enviar justificativa"}
+                    Anexar documento
+                    <input type="file" hidden accept=".pdf,.jpg,.jpeg,.png" {...registerJustification("attachment")} />
                   </Button>
+                  <Typography variant="caption" color="text.secondary">
+                    {attachmentName}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Formatos aceitos: PDF, JPG ou PNG (até 5MB).
+                  </Typography>
+                  {justificationErrors.attachment && (
+                    <Typography variant="caption" color="error">
+                      {justificationErrors.attachment.message}
+                    </Typography>
+                  )}
+                </Stack>
 
-                  <Collapse in={Boolean(justificationMessage)}>
-                    <Alert severity="success" onClose={() => setJustificationMessage(null)} sx={{ borderRadius: 2 }}>
-                      {justificationMessage}
-                    </Alert>
-                  </Collapse>
-                </Box>
-              </CardContent>
-            </Card>
-          </Stack>
+                <Button
+                  type="submit"
+                  size="large"
+                  variant="contained"
+                  disabled={isSubmittingJustification}
+                  startIcon={isSubmittingJustification ? <CircularProgress size={18} color="inherit" /> : null}
+                  sx={{
+                    background: "linear-gradient(90deg, #65e33f 0%, #387d23 100%)",
+                    color: "#ffffff",
+                    fontWeight: 700,
+                    boxShadow: "0 12px 30px rgba(0,0,0,0.2)",
+                    "&:hover": {
+                      background: "linear-gradient(90deg, #58d034 0%, #2e6f1d 100%)",
+                    },
+                  }}
+                >
+                  {isSubmittingJustification ? "Enviando..." : "Enviar justificativa"}
+                </Button>
+
+                <Collapse in={Boolean(justificationMessage)}>
+                  <Alert severity="success" onClose={() => setJustificationMessage(null)} sx={{ borderRadius: 2 }}>
+                    {justificationMessage}
+                  </Alert>
+                </Collapse>
+              </Box>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 3 }}>
+              <Button onClick={closeJustificationModal} color="inherit">
+                Fechar
+              </Button>
+            </DialogActions>
+          </Dialog>
 
           <Card
             sx={{
