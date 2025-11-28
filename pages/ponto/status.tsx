@@ -1,79 +1,55 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { useRouter } from "next/router";
+import { useMemo } from "react";
 import {
   Box,
   Card,
   CardContent,
   Chip,
   Button,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
   Typography,
-  Link as MuiLink,
-  Divider,
+  Stack,
+  Container,
 } from "@mui/material";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { clearAuthFlag } from "@/utils/auth";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePoints } from "@/hooks/usePoints";
 
-const STATUS_DATA = [
-  { date: "2025-11-18", weekday: "Seg", status: "batido", time: "08:02" },
-  { date: "2025-11-19", weekday: "Ter", status: "batido", time: "08:05" },
-  { date: "2025-11-20", weekday: "Qua", status: "pendente", time: null },
-  { date: "2025-11-21", weekday: "Qui", status: "batido", time: "08:11" },
-  { date: "2025-11-22", weekday: "Sex", status: "ajuste", time: "07:55" },
-  { date: "2025-10-30", weekday: "Qui", status: "batido", time: "08:03" },
-];
+// Componente simples para colorir o status na tabela
+function StatusChip({ type }: { type: string }) {
+  const colors: Record<string, "success" | "warning" | "info" | "error" | "default"> = {
+    entrada: "success",
+    pausa: "warning",
+    retorno: "info",
+    saida: "error",
+  };
 
-const MONTH_OPTIONS = [
-  { label: "Novembro/2025", value: "2025-11" },
-  { label: "Outubro/2025", value: "2025-10" },
-];
-
-const STATUS_FILTER_OPTIONS = [
-  { label: "Todos", value: "all" },
-  { label: "Ponto batido", value: "batido" },
-  { label: "Em aberto", value: "pendente" },
-  { label: "Aguardando ajuste", value: "ajuste" },
-];
-
-function StatusChip({ status }: { status: string }) {
-  const config = {
-    batido: { label: "Ponto batido", color: "success" as const },
-    pendente: { label: "Em aberto", color: "warning" as const },
-    ajuste: { label: "Aguardando ajuste", color: "info" as const },
-  }[status] ?? { label: status, color: "default" as const };
-
-  return <Chip label={config.label} color={config.color} size="small" />;
+  return (
+    <Chip
+      label={type.toUpperCase()}
+      color={colors[type] || "default"}
+      size="small"
+      sx={{ fontWeight: "bold" }}
+    />
+  );
 }
 
 export default function StatusPontoPage() {
-  const router = useRouter();
-  const [selectedMonth, setSelectedMonth] = useState("2025-11");
-  const [selectedStatus, setSelectedStatus] = useState<(typeof STATUS_FILTER_OPTIONS)[number]["value"]>("all");
   const canRender = useRequireAuth();
+  const { logout } = useAuth();
+  
+  // Pega os pontos reais do LocalStorage
+  const { points } = usePoints();
 
-  const handleLogout = () => {
-    clearAuthFlag();
-    router.push("/auth/login");
-  };
-
-  const filteredData = useMemo(() => {
-    return STATUS_DATA.filter((item) => {
-      const matchesMonth = item.date.startsWith(selectedMonth);
-      const matchesStatus = selectedStatus === "all" || item.status === selectedStatus;
-      return matchesMonth && matchesStatus;
-    });
-  }, [selectedMonth, selectedStatus]);
+  // Ordena os pontos do mais recente para o mais antigo
+  const sortedPoints = useMemo(() => {
+    return [...points].sort((a, b) => b.timestamp - a.timestamp);
+  }, [points]);
 
   if (!canRender) {
     return null;
@@ -82,7 +58,7 @@ export default function StatusPontoPage() {
   return (
     <>
       <Head>
-        <title>Status dos Pontos — KickHub</title>
+        <title>Histórico Completo — KickHub</title>
       </Head>
 
       <Box
@@ -94,169 +70,74 @@ export default function StatusPontoPage() {
           px: { xs: 2, md: 3 },
         }}
       >
-        <Stack spacing={4} sx={{ maxWidth: 1100, mx: "auto" }}>
-          <Box sx={{ color: "#fff", textAlign: { xs: "left", md: "center" }, display: "flex", flexDirection: "column", gap: 1 }}>
-            <Typography variant="h4" component="h1" fontWeight={800}>
-              Status dos pontos
-            </Typography>
-            <Typography sx={{ opacity: 0.9, maxWidth: 720, mx: { xs: 0, md: "auto" } }}>
-              Consulte rapidamente quais dias já foram registrados ou dependem de ajuste.
-            </Typography>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mt: 2 }} justifyContent={{ xs: "flex-start", md: "center" }}>
-              <Button
-                component={Link}
-                href="/ponto/bater"
-                variant="outlined"
-                color="inherit"
-                sx={{
-                  borderColor: "rgba(255, 255, 255, 0.7)",
-                  color: "#ffffff",
-                  fontWeight: 700,
-                  "&:hover": {
-                    borderColor: "#ffffff",
-                    backgroundColor: "rgba(255, 255, 255, 0.1)",
-                  },
-                }}
-              >
-                Voltar para o painel
-              </Button>
-              <Button
-                variant="contained"
-                color="inherit"
-                onClick={handleLogout}
-                sx={{
-                  color: "#1f2937",
-                  fontWeight: 700,
-                  backgroundColor: "#ffffff",
-                  "&:hover": {
-                    backgroundColor: "rgba(255,255,255,0.85)",
-                    color: "#0f172a",
-                  },
-                }}
-              >
-                Fazer logout
-              </Button>
-            </Stack>
-          </Box>
-
-          <Card
-            sx={{
-              borderRadius: 4,
-              boxShadow: "0px 25px 60px rgba(0,0,0,0.18)",
-              backgroundColor: "rgba(255,255,255,0.95)",
-              backdropFilter: "blur(10px)",
-            }}
-          >
-            <CardContent sx={{ p: { xs: 3, sm: 4 }, display: "flex", flexDirection: "column", gap: 3 }}>
-              <Stack direction={{ xs: "column", md: "row" }} alignItems={{ md: "center" }} justifyContent="space-between" spacing={3}>
-                <Box>
-                  <Typography variant="h5" component="h2" fontWeight={700} gutterBottom>
-                    Painel do mês
-                  </Typography>
-                  <Typography color="text.secondary">
-                    Escolha o mês e visualize, em uma única tabela, o status e o horário registrado de cada dia.
-                  </Typography>
-                </Box>
-
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ width: "100%", maxWidth: 520 }}>
-                  <FormControl sx={{ minWidth: 200 }}>
-                    <InputLabel id="mes-label">Mês</InputLabel>
-                    <Select
-                      labelId="mes-label"
-                      label="Mês"
-                      value={selectedMonth}
-                      onChange={(event) => setSelectedMonth(event.target.value)}
-                    >
-                      {MONTH_OPTIONS.map((option) => (
-                        <MenuItem key={option.value} value={option.value}>
-                          {option.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl sx={{ minWidth: 200 }}>
-                    <InputLabel id="status-label">Status</InputLabel>
-                    <Select
-                      labelId="status-label"
-                      label="Status"
-                      value={selectedStatus}
-                      onChange={(event) =>
-                        setSelectedStatus(event.target.value as (typeof STATUS_FILTER_OPTIONS)[number]["value"])
-                      }
-                    >
-                      {STATUS_FILTER_OPTIONS.map((option) => (
-                        <MenuItem key={option.value} value={option.value}>
-                          {option.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Stack>
+        <Container maxWidth="md">
+          <Stack spacing={4}>
+            {/* Cabeçalho Simples */}
+            <Box sx={{ color: "#fff", textAlign: "center" }}>
+              <Typography variant="h4" fontWeight={800} gutterBottom>
+                Histórico de Registros
+              </Typography>
+              <Typography sx={{ opacity: 0.9 }}>
+                Visualize todos os registros de ponto salvos neste dispositivo.
+              </Typography>
+              
+              <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 3 }}>
+                <Button
+                  component={Link}
+                  href="/ponto/bater"
+                  variant="outlined"
+                  sx={{ color: "#fff", borderColor: "#fff", "&:hover": { borderColor: "#eee", bgcolor: "rgba(255,255,255,0.1)" } }}
+                >
+                  Voltar para o painel
+                </Button>
+                <Button
+                  onClick={() => logout()}
+                  variant="contained"
+                  sx={{ bgcolor: "#fff", color: "#387d23", "&:hover": { bgcolor: "#f0f0f0" } }}
+                >
+                  Sair
+                </Button>
               </Stack>
+            </Box>
 
-              <Divider sx={{ my: 1.5 }} />
-
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Data</TableCell>
-                    <TableCell>Dia</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Horário registrado</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredData.map((item) => (
-                    <TableRow key={item.date} hover>
-                      <TableCell>{item.date}</TableCell>
-                      <TableCell>{item.weekday}</TableCell>
-                      <TableCell>
-                        <StatusChip status={item.status} />
-                      </TableCell>
-                      <TableCell>{item.time ?? "—"}</TableCell>
-                    </TableRow>
-                  ))}
-                  {!filteredData.length && (
+            {/* Tabela de Registros */}
+            <Card sx={{ borderRadius: 4, boxShadow: "0 20px 50px rgba(0,0,0,0.1)" }}>
+              <CardContent sx={{ p: 0 }}>
+                <Table>
+                  <TableHead sx={{ bgcolor: "#f9fafb" }}>
                     <TableRow>
-                      <TableCell colSpan={4} align="center">
-                        Nenhum dado para o mês selecionado.
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>Data</TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>Horário</TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>Tipo</TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-
-              <Divider sx={{ my: 1.5 }} />
-
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="space-between" alignItems="center">
-                <Typography color="text.secondary" textAlign={{ xs: "center", sm: "left" }}>
-                  Precisa registrar ou ajustar algo?
-                </Typography>
-                <Stack direction="row" spacing={2}>
-                  <MuiLink
-                    component={Link}
-                    href="/ponto/bater"
-                    underline="none"
-                    fontWeight={700}
-                    sx={{ color: "#2e6f1d" }}
-                  >
-                    Bater ponto
-                  </MuiLink>
-                  <MuiLink
-                    component={Link}
-                    href="/ponto/corrigir"
-                    underline="none"
-                    fontWeight={700}
-                    sx={{ color: "#2e6f1d" }}
-                  >
-                    Corrigir/Justificar
-                  </MuiLink>
-                </Stack>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Stack>
+                  </TableHead>
+                  <TableBody>
+                    {sortedPoints.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={3} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                          Nenhum registro encontrado até o momento.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {sortedPoints.map((p) => (
+                      <TableRow key={p.id} hover>
+                        <TableCell>
+                          {new Date(p.timestamp).toLocaleDateString("pt-BR")}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600, color: "#1f2937" }}>
+                          {new Date(p.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                        </TableCell>
+                        <TableCell>
+                          <StatusChip type={p.type} />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </Stack>
+        </Container>
       </Box>
     </>
   );

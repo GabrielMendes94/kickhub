@@ -22,12 +22,8 @@ import {
   ListItem,
   ListItemText,
   Divider,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from "@mui/material";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -36,28 +32,8 @@ import {
   CorrigirPontoFormData,
 } from "@/validation/pontoSchemas";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { clearAuthFlag } from "@/utils/auth";
-
-const MOCK_REGISTROS = [
-  {
-    id: "reg-1",
-    date: "2025-11-20",
-    time: "08:01",
-    status: "Aprovado",
-  },
-  {
-    id: "reg-2",
-    date: "2025-11-21",
-    time: "08:17",
-    status: "Pendente",
-  },
-  {
-    id: "reg-3",
-    date: "2025-11-22",
-    time: "07:55",
-    status: "Aprovado",
-  },
-];
+import { useAuth } from "@/contexts/AuthContext"; // Importação do contexto
+import { usePoints } from "@/hooks/usePoints";   // Importação dos dados reais
 
 const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -89,15 +65,27 @@ export default function CorrigirPontoPage() {
   const router = useRouter();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [justificationMessage, setJustificationMessage] = useState<string | null>(null);
-  const [isJustificationModalOpen, setJustificationModalOpen] = useState(false);
+  
+  // Hooks de Auth e Dados
   const canRender = useRequireAuth();
+  const { logout } = useAuth();
+  const { points } = usePoints();
+
+  // Prepara os dados reais para exibição (ordem decrescente)
+  const sortedPoints = useMemo(() => {
+    return [...points].sort((a, b) => b.timestamp - a.timestamp);
+  }, [points]);
+
+  // Pega os 3 últimos registros para a lista lateral
+  const recentPoints = sortedPoints.slice(0, 3);
+
   const {
     handleSubmit: handleSubmitCorrection,
     register: registerCorrection,
     reset: resetCorrection,
+    watch: watchCorrection,
     formState: { errors: correctionErrors, isSubmitting: isSubmittingCorrection },
     setValue: setCorrectionValue,
-    control: correctionControl,
   } = useForm<CorrigirPontoFormData>({
     resolver: zodResolver(corrigirPontoSchema),
     defaultValues: corrigirPontoDefaultValues,
@@ -107,36 +95,32 @@ export default function CorrigirPontoPage() {
     handleSubmit: handleSubmitJustification,
     register: registerJustification,
     reset: resetJustification,
+    watch: watchJustification,
     formState: { errors: justificationErrors, isSubmitting: isSubmittingJustification },
-    control: justificationControl,
   } = useForm<JustificarPontoFormData>({
     resolver: zodResolver(justificarPontoSchema),
     defaultValues: justificarPontoDefaultValues,
   });
 
-  const watchedRecordId = useWatch({
-    control: correctionControl,
-    name: "recordId",
-  });
+  const watchedRecordId = watchCorrection("recordId");
+  
+  // Busca o registro selecionado nos dados reais
   const selectedRecord = useMemo(() => {
-    return MOCK_REGISTROS.find((reg) => reg.id === watchedRecordId);
-  }, [watchedRecordId]);
+    return sortedPoints.find((reg) => reg.id === watchedRecordId);
+  }, [watchedRecordId, sortedPoints]);
 
-  const watchedAttachment = useWatch({
-    control: justificationControl,
-    name: "attachment",
-  });
+  const watchedAttachment = watchJustification("attachment");
   const attachmentName = watchedAttachment?.length
     ? watchedAttachment[0]?.name ?? "Documento selecionado"
     : "Nenhum documento selecionado";
 
-  const handleLogout = () => {
-    clearAuthFlag();
-    router.push("/auth/login");
+  const handleLogout = async () => {
+    await logout();
   };
 
   async function handleCorrection(_data: CorrigirPontoFormData) {
     setSuccessMessage(null);
+    // Simula envio
     await new Promise((resolve) => setTimeout(resolve, 1400));
     setSuccessMessage("Solicitação de correção enviada à gestão.");
     resetCorrection(corrigirPontoDefaultValues);
@@ -144,16 +128,15 @@ export default function CorrigirPontoPage() {
 
   async function handleJustification(_data: JustificarPontoFormData) {
     setJustificationMessage(null);
+    // Simula envio
     await new Promise((resolve) => setTimeout(resolve, 1400));
     setJustificationMessage("Justificativa registrada para análise.");
     resetJustification(justificarPontoDefaultValues);
   }
 
-  const openJustificationModal = () => setJustificationModalOpen(true);
-  const closeJustificationModal = () => {
-    setJustificationModalOpen(false);
-    setJustificationMessage(null);
-  };
+  // Formatadores auxiliares
+  const formatDate = (ts: number) => new Date(ts).toLocaleDateString("pt-BR");
+  const formatTime = (ts: number) => new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
   if (!canRender) {
     return null;
@@ -175,6 +158,7 @@ export default function CorrigirPontoPage() {
         }}
       >
         <Stack spacing={4} sx={{ maxWidth: 1100, mx: "auto" }}>
+          {/* Cabeçalho */}
           <Box sx={{ color: "#ffffff", textAlign: { xs: "left", md: "center" }, display: "flex", flexDirection: "column", gap: 1 }}>
             <Typography variant="h4" component="h1" fontWeight={800}>
               Correções e justificativas
@@ -220,6 +204,7 @@ export default function CorrigirPontoPage() {
           </Box>
 
           <Stack direction={{ xs: "column", lg: "row" }} spacing={3}>
+            {/* Card 1: Corrigir Ponto */}
             <Card
               sx={{
                 flex: 1,
@@ -237,14 +222,6 @@ export default function CorrigirPontoPage() {
                   <Typography color="text.secondary">
                     Escolha o registro e informe o novo horário com a justificativa adequada.
                   </Typography>
-                  <Button
-                    variant="outlined"
-                    color="success"
-                    onClick={openJustificationModal}
-                    sx={{ mt: 2, alignSelf: "flex-start", fontWeight: 700 }}
-                  >
-                    Justificar ausência
-                  </Button>
                 </Box>
 
                 <Box component="form" noValidate onSubmit={handleSubmitCorrection(handleCorrection)} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -259,11 +236,17 @@ export default function CorrigirPontoPage() {
                       <MenuItem value="">
                         <em>Selecione</em>
                       </MenuItem>
-                      {MOCK_REGISTROS.map((registro) => (
+                      {/* MAPEAMENTO DOS DADOS REAIS MANTENDO ESTRUTURA VISUAL */}
+                      {sortedPoints.map((registro) => (
                         <MenuItem key={registro.id} value={registro.id}>
-                          {registro.date} às {registro.time} ({registro.status})
+                          {formatDate(registro.timestamp)} às {formatTime(registro.timestamp)} ({registro.type})
                         </MenuItem>
                       ))}
+                      {sortedPoints.length === 0 && (
+                        <MenuItem disabled value="none">
+                          Nenhum registro encontrado
+                        </MenuItem>
+                      )}
                     </Select>
                     {correctionErrors.recordId && (
                       <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
@@ -274,7 +257,7 @@ export default function CorrigirPontoPage() {
 
                   <Collapse in={Boolean(selectedRecord)}>
                     <Alert severity="info" sx={{ borderRadius: 2 }}>
-                      Registro selecionado: {selectedRecord?.date} às {selectedRecord?.time} — {selectedRecord?.status}
+                      Registro selecionado: {selectedRecord ? `${formatDate(selectedRecord.timestamp)} às ${formatTime(selectedRecord.timestamp)} — ${selectedRecord.type.toUpperCase()}` : ""}
                     </Alert>
                   </Collapse>
 
@@ -307,6 +290,7 @@ export default function CorrigirPontoPage() {
                     helperText={correctionErrors.reason?.message}
                   />
 
+                  {/* MANTIDO O CSS ORIGINAL DO BOTÃO */}
                   <Button
                     type="submit"
                     size="large"
@@ -335,100 +319,109 @@ export default function CorrigirPontoPage() {
               </CardContent>
             </Card>
 
-          </Stack>
+            {/* Card 2: Justificar Ausência */}
+            <Card
+              sx={{
+                flex: 1,
+                borderRadius: 4,
+                boxShadow: "0px 25px 60px rgba(0,0,0,0.18)",
+                backgroundColor: "rgba(255,255,255,0.95)",
+                backdropFilter: "blur(8px)",
+              }}
+            >
+              <CardContent sx={{ p: { xs: 3, sm: 4 }, display: "flex", flexDirection: "column", gap: 3 }}>
+                <Box>
+                  <Typography variant="h5" component="h2" fontWeight={700} gutterBottom>
+                    Justificar ausência
+                  </Typography>
+                  <Typography color="text.secondary">
+                    Informe a data, descreva o motivo e anexe um documento para acelerar a aprovação.
+                  </Typography>
+                </Box>
 
-          <Dialog open={isJustificationModalOpen} onClose={closeJustificationModal} fullWidth maxWidth="sm">
-            <DialogTitle fontWeight={700}>Justificar ausência</DialogTitle>
-            <DialogContent sx={{ pt: 1 }}>
-              <Typography color="text.secondary" sx={{ mb: 3 }}>
-                Informe a data, descreva o motivo e anexe um documento para acelerar a aprovação.
-              </Typography>
+                <Box component="form" noValidate onSubmit={handleSubmitJustification(handleJustification)} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                  <TextField
+                    label="Data da ocorrência"
+                    type="date"
+                    InputLabelProps={{ shrink: true }}
+                    {...registerJustification("absenceDate")}
+                    error={Boolean(justificationErrors.absenceDate)}
+                    helperText={justificationErrors.absenceDate?.message}
+                  />
 
-              <Box component="form" noValidate onSubmit={handleSubmitJustification(handleJustification)} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                <TextField
-                  label="Data da ocorrência"
-                  type="date"
-                  InputLabelProps={{ shrink: true }}
-                  {...registerJustification("absenceDate")}
-                  error={Boolean(justificationErrors.absenceDate)}
-                  helperText={justificationErrors.absenceDate?.message}
-                />
+                  <TextField
+                    label="Detalhes da justificativa"
+                    multiline
+                    minRows={4}
+                    placeholder="Conte-nos o que aconteceu"
+                    {...registerJustification("reason")}
+                    error={Boolean(justificationErrors.reason)}
+                    helperText={justificationErrors.reason?.message}
+                  />
 
-                <TextField
-                  label="Detalhes da justificativa"
-                  multiline
-                  minRows={4}
-                  placeholder="Conte-nos o que aconteceu"
-                  {...registerJustification("reason")}
-                  error={Boolean(justificationErrors.reason)}
-                  helperText={justificationErrors.reason?.message}
-                />
+                  <Stack spacing={1}>
+                    <Button
+                      component="label"
+                      variant="outlined"
+                      color="inherit"
+                      sx={{
+                        alignSelf: { xs: "stretch", sm: "flex-start" },
+                        borderColor: "rgba(56, 125, 35, 0.5)",
+                        color: "#1f2937",
+                        fontWeight: 600,
+                        "&:hover": {
+                          borderColor: "#2e6f1d",
+                          backgroundColor: "rgba(56, 125, 35, 0.08)",
+                        },
+                      }}
+                    >
+                      Anexar documento
+                      <input type="file" hidden accept=".pdf,.jpg,.jpeg,.png" {...registerJustification("attachment")} />
+                    </Button>
+                    <Typography variant="caption" color="text.secondary">
+                      {attachmentName}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Formatos aceitos: PDF, JPG ou PNG (até 5MB).
+                    </Typography>
+                    {justificationErrors.attachment && (
+                      <Typography variant="caption" color="error">
+                        {justificationErrors.attachment.message}
+                      </Typography>
+                    )}
+                  </Stack>
 
-                <Stack spacing={1}>
+                  {/* MANTIDO O CSS ORIGINAL DO BOTÃO */}
                   <Button
-                    component="label"
-                    variant="outlined"
-                    color="inherit"
+                    type="submit"
+                    size="large"
+                    variant="contained"
+                    disabled={isSubmittingJustification}
+                    startIcon={isSubmittingJustification ? <CircularProgress size={18} color="inherit" /> : null}
                     sx={{
-                      alignSelf: { xs: "stretch", sm: "flex-start" },
-                      borderColor: "rgba(56, 125, 35, 0.5)",
-                      color: "#1f2937",
-                      fontWeight: 600,
+                      background: "linear-gradient(90deg, #65e33f 0%, #387d23 100%)",
+                      color: "#ffffff",
+                      fontWeight: 700,
+                      boxShadow: "0 12px 30px rgba(0,0,0,0.2)",
                       "&:hover": {
-                        borderColor: "#2e6f1d",
-                        backgroundColor: "rgba(56, 125, 35, 0.08)",
+                        background: "linear-gradient(90deg, #58d034 0%, #2e6f1d 100%)",
                       },
                     }}
                   >
-                    Anexar documento
-                    <input type="file" hidden accept=".pdf,.jpg,.jpeg,.png" {...registerJustification("attachment")} />
+                    {isSubmittingJustification ? "Enviando..." : "Enviar justificativa"}
                   </Button>
-                  <Typography variant="caption" color="text.secondary">
-                    {attachmentName}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Formatos aceitos: PDF, JPG ou PNG (até 5MB).
-                  </Typography>
-                  {justificationErrors.attachment && (
-                    <Typography variant="caption" color="error">
-                      {justificationErrors.attachment.message}
-                    </Typography>
-                  )}
-                </Stack>
 
-                <Button
-                  type="submit"
-                  size="large"
-                  variant="contained"
-                  disabled={isSubmittingJustification}
-                  startIcon={isSubmittingJustification ? <CircularProgress size={18} color="inherit" /> : null}
-                  sx={{
-                    background: "linear-gradient(90deg, #65e33f 0%, #387d23 100%)",
-                    color: "#ffffff",
-                    fontWeight: 700,
-                    boxShadow: "0 12px 30px rgba(0,0,0,0.2)",
-                    "&:hover": {
-                      background: "linear-gradient(90deg, #58d034 0%, #2e6f1d 100%)",
-                    },
-                  }}
-                >
-                  {isSubmittingJustification ? "Enviando..." : "Enviar justificativa"}
-                </Button>
+                  <Collapse in={Boolean(justificationMessage)}>
+                    <Alert severity="success" onClose={() => setJustificationMessage(null)} sx={{ borderRadius: 2 }}>
+                      {justificationMessage}
+                    </Alert>
+                  </Collapse>
+                </Box>
+              </CardContent>
+            </Card>
+          </Stack>
 
-                <Collapse in={Boolean(justificationMessage)}>
-                  <Alert severity="success" onClose={() => setJustificationMessage(null)} sx={{ borderRadius: 2 }}>
-                    {justificationMessage}
-                  </Alert>
-                </Collapse>
-              </Box>
-            </DialogContent>
-            <DialogActions sx={{ px: 3, pb: 3 }}>
-              <Button onClick={closeJustificationModal} color="inherit">
-                Fechar
-              </Button>
-            </DialogActions>
-          </Dialog>
-
+          {/* Card 3: Registros Recentes (Lista dinâmica com estilo original) */}
           <Card
             sx={{
               borderRadius: 4,
@@ -442,19 +435,30 @@ export default function CorrigirPontoPage() {
                 Registros recentes
               </Typography>
               <List>
-                {MOCK_REGISTROS.map((registro, index) => (
+                {recentPoints.length === 0 && (
+                   <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+                     Você ainda não possui registros.
+                   </Typography>
+                )}
+                {recentPoints.map((registro, index) => (
                   <Box key={registro.id}>
                     <ListItem
                       disableGutters
                       secondaryAction={
-                        <Typography color={registro.status === "Aprovado" ? "success.main" : registro.status === "Pendente" ? "warning.main" : "text.secondary"}>
-                          {registro.status}
+                        <Typography color={
+                          registro.type === "entrada" || registro.type === "retorno" ? "success.main" : 
+                          registro.type === "pausa" ? "warning.main" : "error.main"
+                        }>
+                          {registro.type.toUpperCase()}
                         </Typography>
                       }
                     >
-                      <ListItemText primary={`${registro.date} às ${registro.time}`} secondary={`ID: ${registro.id}`} />
+                      <ListItemText 
+                        primary={`${formatDate(registro.timestamp)} às ${formatTime(registro.timestamp)}`} 
+                        secondary={`ID: ${registro.id.substring(0,8)}...`} 
+                      />
                     </ListItem>
-                    {index < MOCK_REGISTROS.length - 1 && <Divider component="li" />}
+                    {index < recentPoints.length - 1 && <Divider component="li" />}
                   </Box>
                 ))}
               </List>

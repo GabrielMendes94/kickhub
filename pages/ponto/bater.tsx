@@ -1,52 +1,30 @@
 import Head from "next/head";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { Fragment, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import type { JSX } from "react";
-
-import { Box, Button, Card, CardContent, Container, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  ButtonBase,
+  Card,
+  CardContent,
+  Container,
+  Divider,
+  Link as MuiLink,
+  Stack,
+  Typography,
+} from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { clearAuthFlag } from "@/utils/auth";
-import { ActionTile } from "@/components/ActionTile";
-import { UserBadge } from "@/components/UserBadge";
-import { SummaryStatCard } from "@/components/ponto/SummaryStatCard";
-import { HistoryList } from "@/components/ponto/HistoryList";
+import { useAuth } from "@/contexts/AuthContext";
+import { usePoints, PointType } from "@/hooks/usePoints";
 
 const RECIFE_TIMEZONE = "America/Recife";
 
 type QuickActionIcon = "entrada" | "saida" | "pausa" | "retorno" | "justificar";
 
-type QuickAction = {
-  id: string;
-  title: string;
-  description?: string;
-  variant: "entrada" | "pausa" | "saida" | "justificar";
-  icon?: QuickActionIcon;
-};
-
-const quickActions: QuickAction[] = [
-  {
-    id: "entrada",
-    title: "Entrada",
-    description: "Inicie seu expediente com apenas um toque.",
-    variant: "entrada",
-    icon: "entrada",
-  },
-  {
-    id: "saida",
-    title: "Saída",
-    description: "Finalize o dia registrando seu horário de saída.",
-    variant: "saida",
-    icon: "saida",
-  },
-  {
-    id: "justificar",
-    title: "Corrigir / Justificar",
-    description: "Envie ajustes ou justificativas de ponto.",
-    variant: "justificar",
-    icon: "justificar",
-  },
-];
-
+// --- ÍCONES SVG ---
 const actionIcons: Record<QuickActionIcon, JSX.Element> = {
   entrada: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -84,76 +62,8 @@ const actionIcons: Record<QuickActionIcon, JSX.Element> = {
   ),
 };
 
-const loggedUser = {
-  name: "Gabriel Mendes",
-  role: "Colaborador",
-  initials: "GM",
-};
-
-type HistoryEntryType = "entrada" | "pausa" | "retorno" | "saida";
-
-const historyEntries: Array<{
-  id: string;
-  label: string;
-  time: string;
-  type: HistoryEntryType;
-}> = [
-  { id: "1", label: "Entrada", time: "08:00", type: "entrada" },
-  { id: "2", label: "Pausa", time: "12:02", type: "pausa" },
-  { id: "3", label: "Retorno", time: "13:05", type: "retorno" },
-  { id: "4", label: "Saída", time: "17:02", type: "saida" },
-];
-
-type SummaryStat = {
-  id: "worked" | "break" | "records";
-  label: string;
-  value: string;
-  icon: JSX.Element;
-};
-
-const daySummaryStats: SummaryStat[] = [
-  {
-    id: "worked",
-    label: "Tempo trabalhado",
-    value: "08h 12m",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 6v6l3 3" />
-      </svg>
-    ),
-  },
-  {
-    id: "break",
-    label: "Tempo de pausa",
-    value: "01h 05m",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M8 2h8l1 4h3" />
-        <path d="M17 9a5 5 0 0 1-10 0" />
-        <path d="M12 14v7" />
-        <path d="M9 21h6" />
-      </svg>
-    ),
-  },
-  {
-    id: "records",
-    label: "Registros",
-    value: `${historyEntries.length} hoje`,
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 4h10v16H5V4z" />
-        <path d="M9 8h10" />
-        <path d="M9 12h10" />
-        <path d="M9 16h6" />
-      </svg>
-    ),
-  },
-];
-
-type QuickActionVariant = QuickAction["variant"] | "retorno";
-
-const quickActionColors: Record<QuickActionVariant, string> = {
+// --- CONFIGURAÇÃO DE CORES ---
+const quickActionColors = {
   entrada: "#00a96e",
   pausa: "#d9b36c",
   retorno: "#3b82f6",
@@ -161,20 +71,89 @@ const quickActionColors: Record<QuickActionVariant, string> = {
   justificar: "#60a5fa",
 };
 
-const historyDotColors: Record<HistoryEntryType, string> = {
+const historyDotColors: Record<string, string> = {
   entrada: "#00a96e",
   pausa: "#d9b36c",
   retorno: "#3b82f6",
   saida: "#f87171",
 };
 
-const historyListEntries = historyEntries.map((entry) => ({
-  id: entry.id,
-  label: entry.label,
-  time: entry.time,
-  dotColor: historyDotColors[entry.type],
-}));
+// --- COMPONENTE DO BOTÃO (TILE) ---
+function ActionTile({ title, description, variant, icon, href, onClick, disabled }: any) {
+  const content = (
+    <Stack
+      spacing={0.5}
+      alignItems={icon ? "center" : "flex-start"}
+      textAlign={icon ? "center" : "left"}
+      sx={{ width: "100%" }}
+    >
+      {icon ? (
+        <Box
+          sx={{
+            width: 56,
+            height: 56,
+            borderRadius: "50%",
+            border: "1px solid rgba(255,255,255,0.4)",
+            backgroundColor: alpha("#ffffff", 0.18),
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            mb: 0.5,
+            "& svg": { width: 26, height: 26 },
+          }}
+        >
+          {actionIcons[icon as QuickActionIcon]}
+        </Box>
+      ) : null}
+      <Typography variant="subtitle1" fontWeight={700} component="strong" sx={{ color: "#ffffff" }}>
+        {title}
+      </Typography>
+      {description ? (
+        <Typography variant="body2" sx={{ color: alpha("#ffffff", 0.85) }}>
+          {description}
+        </Typography>
+      ) : null}
+    </Stack>
+  );
 
+  const baseSx = {
+    width: "100%",
+    borderRadius: 3,
+    p: 3,
+    color: "#ffffff",
+    display: "flex",
+    flexDirection: "column",
+    gap: 1,
+    textDecoration: "none",
+    alignItems: icon ? "center" : "flex-start",
+    textAlign: icon ? "center" : "left",
+    // Cor condicional se estiver desabilitado
+    backgroundColor: disabled ? "#9ca3af" : quickActionColors[variant as keyof typeof quickActionColors],
+    boxShadow: disabled ? "none" : "0 12px 30px rgba(0,0,0,0.18)",
+    opacity: disabled ? 0.7 : 1,
+    cursor: disabled ? "not-allowed" : "pointer",
+    transition: "transform 0.2s ease",
+    "&:hover": {
+      transform: disabled ? "none" : "translateY(-4px)",
+    },
+  };
+
+  if (href) {
+    return (
+      <ButtonBase component={Link} href={href} sx={baseSx} focusRipple={!disabled}>
+        {content}
+      </ButtonBase>
+    );
+  }
+
+  return (
+    <ButtonBase component="button" type="button" onClick={onClick} disabled={disabled} sx={baseSx} focusRipple={!disabled}>
+      {content}
+    </ButtonBase>
+  );
+}
+
+// --- UTILITÁRIOS DE HORA ---
 function getRecifeTimeLabel() {
   return new Intl.DateTimeFormat("pt-BR", {
     timeZone: RECIFE_TIMEZONE,
@@ -195,49 +174,63 @@ function getRecifeDateLabel() {
     .replace(/^./, (match) => match.toUpperCase());
 }
 
-export default function BaterPontoPage() {
-  const router = useRouter();
-  const canRender = useRequireAuth();
-  const [recifeTime, setRecifeTime] = useState(getRecifeTimeLabel());
-  const [recifeDate, setRecifeDate] = useState(getRecifeDateLabel());
-  const [isOnBreak, setIsOnBreak] = useState(false);
+function formatHistoryTime(timestamp: number) {
+  return new Date(timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
 
+// --- COMPONENTE DA PÁGINA ---
+export default function BaterPontoPage() {
+  const { user, logout } = useAuth();
+  const canRender = useRequireAuth();
+  
+  // Hook personalizado de lógica de ponto (LocalStorage)
+  const { registerPoint, getTodayPoints, calculateDailySummary } = usePoints();
+  
+  // Estado do relógio (para evitar erro de hidratação)
+  const [recifeTime, setRecifeTime] = useState<string | null>(null);
+  const [recifeDate, setRecifeDate] = useState<string | null>(null);
+
+  // Atualiza o relógio no cliente
   useEffect(() => {
-    const interval = setInterval(() => {
+    const updateTime = () => {
       setRecifeTime(getRecifeTimeLabel());
       setRecifeDate(getRecifeDateLabel());
-    }, 1000);
-
+    };
+    updateTime(); // Chama imediatamente
+    const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const todaySummary = useMemo(() => {
-    return `${historyEntries.length} marcações registradas hoje`;
-  }, []);
+  // Dados calculados do dia
+  const dailySummary = calculateDailySummary();
+  const todayPoints = getTodayPoints();
+  
+  // Lógica de Estado para Habilitar/Desabilitar botões
+  const lastType = dailySummary.lastType;
+  // Está trabalhando se bateu Entrada ou Retorno
+  const isWorking = lastType === "entrada" || lastType === "retorno";
+  // Está em pausa se bateu Pausa
+  const isOnBreak = lastType === "pausa";
+  // Dia encerrado se bateu Saída (mas permitimos nova entrada se for turno extra)
+  const isFinished = lastType === "saida";
 
+  // Textos dinâmicos do botão de pausa
   const pauseButtonLabel = isOnBreak ? "Retornar" : "Iniciar pausa";
-  const pauseButtonDescription = isOnBreak
-    ? "Clique para encerrar o intervalo e voltar ao trabalho."
-    : "Marque o intervalo de almoço sem complicações.";
-  const pauseButtonVariant: QuickActionVariant = isOnBreak ? "retorno" : "pausa";
+  const pauseButtonDescription = isOnBreak ? "Voltar ao trabalho" : "Intervalo de descanso";
+  const pauseButtonVariant = isOnBreak ? "retorno" : "pausa";
+  const pauseButtonIcon = isOnBreak ? "retorno" : "pausa";
 
-  function handleToggleBreak() {
-    setIsOnBreak((prev) => !prev);
-  }
+  if (!canRender) return null;
 
-  function handleLogout() {
-    clearAuthFlag();
-    router.push("/auth/login");
-  }
-
-  if (!canRender) {
-    return null;
-  }
+  // Iniciais do usuário logado
+  const userInitials = user?.displayName
+    ? user.displayName.substring(0, 2).toUpperCase()
+    : user?.email?.substring(0, 2).toUpperCase() || "US";
 
   return (
     <>
       <Head>
-        <title>Dashboard de Ponto — KickHub</title>
+        <title>Ponto — KickHub</title>
       </Head>
 
       <Box
@@ -250,178 +243,223 @@ export default function BaterPontoPage() {
         }}
       >
         <Container maxWidth="lg">
-          <Stack spacing={{ xs: 3, md: 4 }}>
+          <Stack spacing={4}>
+            
+            {/* CABEÇALHO */}
             <Box
               component="header"
               sx={{
                 display: "flex",
-                flexDirection: { xs: "column", md: "row" },
-                alignItems: { xs: "flex-start", md: "center" },
                 justifyContent: "space-between",
-                gap: 3,
+                alignItems: "center",
                 color: "#111827",
+                flexDirection: { xs: "column", md: "row" },
+                gap: 3,
               }}
             >
               <Box>
-                <Typography variant="h4" fontWeight={800} component="h1">
+                <Typography variant="h4" fontWeight={800}>
                   Sistema de Ponto
                 </Typography>
-                <Typography sx={{ mt: 0.5, color: "rgba(0,0,0,0.7)" }}>Registrador de trabalho</Typography>
+                <Typography sx={{ opacity: 0.7 }}>
+                  Olá, {user?.displayName?.split(" ")[0] || "Colaborador"}
+                </Typography>
               </Box>
 
-              <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-                <UserBadge initials={loggedUser.initials} name={loggedUser.name} role={loggedUser.role} />
-
-                <Button
-                  type="button"
-                  onClick={handleLogout}
-                  variant="contained"
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Box
                   sx={{
-                    borderRadius: 999,
-                    px: 3,
-                    py: 1.2,
-                    fontWeight: 600,
-                    textTransform: "none",
-                    background: "linear-gradient(90deg, #1f2937 0%, #111827 100%)",
-                    boxShadow: "0 12px 30px rgba(0,0,0,0.18)",
-                    "&:hover": {
-                      background: "linear-gradient(90deg, #111827 0%, #0b1220 100%)",
-                    },
+                    width: 45,
+                    height: 45,
+                    borderRadius: "50%",
+                    bgcolor: "#fff",
+                    color: "#387d23",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: "bold",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                   }}
                 >
-                  Logout
+                  {userInitials}
+                </Box>
+                <Button
+                  onClick={logout}
+                  variant="contained"
+                  sx={{ borderRadius: 20, bgcolor: "#1f2937", textTransform: "none" }}
+                >
+                  Sair
                 </Button>
               </Stack>
             </Box>
 
-            <Card
-              sx={{
-                borderRadius: 4,
-                boxShadow: "0px 10px 50px rgba(0,0,0,0.08)",
-                textAlign: "center",
-                overflow: "hidden",
-              }}
-            >
-              <CardContent sx={{ py: { xs: 4, md: 6 } }}>
-                <Typography variant="overline" sx={{ letterSpacing: 4, color: "#6b7280" }}>
-                  Horário oficial
+            {/* RELÓGIO */}
+            <Card sx={{ borderRadius: 4, textAlign: "center", boxShadow: "0 10px 40px rgba(0,0,0,0.1)" }}>
+              <CardContent sx={{ py: 6 }}>
+                <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 2 }}>
+                  HORÁRIO DE BRASÍLIA
                 </Typography>
                 <Typography
                   variant="h2"
                   fontWeight={700}
+                  sx={{ mt: 1, color: "#1f2937", fontSize: { xs: "3rem", md: "4.5rem" } }}
+                >
+                  {recifeTime || "--:--:--"}
+                </Typography>
+                <Typography variant="subtitle1" color="text.secondary">
+                  {recifeDate || "Carregando data..."}
+                </Typography>
+              </CardContent>
+            </Card>
+
+            {/* BOTÕES DE REGISTRO */}
+            <Card sx={{ borderRadius: 4 }}>
+              <CardContent sx={{ p: 4 }}>
+                <Typography variant="h6" fontWeight={700} gutterBottom>
+                  Registrar
+                </Typography>
+                <Box
                   sx={{
-                    fontSize: { xs: "3rem", md: "4.5rem" },
-                    mt: 1,
-                    mb: 0.5,
-                    color: "#1f2937",
-                    letterSpacing: -1.5,
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "1fr",
+                      sm: "repeat(2, 1fr)",
+                      md: "repeat(4, 1fr)",
+                    },
+                    gap: 2,
                   }}
                 >
-                  {recifeTime}
-                </Typography>
-                <Typography variant="subtitle1" sx={{ color: "#6b7280" }}>
-                  {recifeDate}
-                </Typography>
+                  {/* Botão ENTRADA: Desabilitado se já está trabalhando ou em pausa */}
+                  <ActionTile
+                    title="Entrada"
+                    description="Iniciar jornada"
+                    variant="entrada"
+                    icon="entrada"
+                    disabled={isWorking || isOnBreak}
+                    onClick={() => registerPoint("entrada")}
+                  />
+
+                  {/* Botão PAUSA/RETORNO: Desabilitado se não iniciou a jornada ou se já encerrou */}
+                  <ActionTile
+                    title={pauseButtonLabel}
+                    description={pauseButtonDescription}
+                    variant={pauseButtonVariant}
+                    icon={pauseButtonIcon}
+                    disabled={(!isWorking && !isOnBreak) || isFinished}
+                    onClick={() => registerPoint(isOnBreak ? "retorno" : "pausa")}
+                  />
+
+                  {/* Botão SAÍDA: Desabilitado se não estiver trabalhando */}
+                  <ActionTile
+                    title="Saída"
+                    description="Encerrar dia"
+                    variant="saida"
+                    icon="saida"
+                    disabled={(!isWorking && !isOnBreak) || isFinished}
+                    onClick={() => registerPoint("saida")}
+                  />
+
+                  {/* Botão JUSTIFICAR: Sempre ativo, leva para outra página */}
+                  <ActionTile
+                    title="Justificar"
+                    description="Correções"
+                    variant="justificar"
+                    icon="justificar"
+                    href="/ponto/corrigir"
+                  />
+                </Box>
               </CardContent>
             </Card>
 
-            <Card sx={{ borderRadius: 4, boxShadow: "0px 10px 50px rgba(0,0,0,0.08)" }}>
-              <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-                <Stack spacing={3}>
-                  <Box>
+            {/* RESUMO E HISTÓRICO */}
+            <Card sx={{ borderRadius: 4 }}>
+              <CardContent sx={{ p: 4 }}>
+                <Stack direction={{ xs: "column", md: "row" }} spacing={4}>
+                  
+                  {/* Coluna da Esquerda: Resumo */}
+                  <Box sx={{ flex: 1 }}>
                     <Typography variant="h6" fontWeight={700} gutterBottom>
-                      Registrar ponto
-                    </Typography>
-                    <Typography color="text.secondary">
-                      Use os atalhos para registrar suas marcações ou abrir a tela de justificativa.
-                    </Typography>
-                  </Box>
-
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: {
-                        xs: "1fr",
-                        sm: "repeat(2, minmax(0, 1fr))",
-                        md: "repeat(3, minmax(0, 1fr))",
-                        lg: "repeat(4, minmax(0, 1fr))",
-                      },
-                      gap: 2,
-                    }}
-                  >
-                    {quickActions.map((action) => (
-                      <Fragment key={action.id}>
-                        {action.id === "saida" && (
-                          <Box>
-                            <ActionTile
-                              title={pauseButtonLabel}
-                              description={pauseButtonDescription}
-                              backgroundColor={quickActionColors[pauseButtonVariant]}
-                              icon={isOnBreak ? actionIcons.retorno : actionIcons.pausa}
-                              onClick={handleToggleBreak}
-                            />
-                          </Box>
-                        )}
-
-                        <Box>
-                          <ActionTile
-                            title={action.title}
-                            description={action.description}
-                            backgroundColor={quickActionColors[action.variant]}
-                            icon={action.icon ? actionIcons[action.icon] : undefined}
-                            href={action.id === "justificar" ? "/ponto/corrigir" : undefined}
-                          />
-                        </Box>
-                      </Fragment>
-                    ))}
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-
-            <Card sx={{ borderRadius: 4, boxShadow: "0px 10px 50px rgba(0,0,0,0.08)" }}>
-              <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-                <Stack spacing={3}>
-                  <Box>
-                    <Typography variant="h6" fontWeight={700}>
                       Resumo do dia
                     </Typography>
-                    <Typography color="text.secondary">Visão rápida das suas marcações</Typography>
+                    <Stack spacing={2}>
+                      <Box sx={{ p: 2, border: "1px solid #eee", borderRadius: 2 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Tempo Trabalhado
+                        </Typography>
+                        <Typography variant="h5" fontWeight={700} sx={{ color: "#387d23" }}>
+                          {dailySummary.worked}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ p: 2, border: "1px solid #eee", borderRadius: 2 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Tempo de Pausa
+                        </Typography>
+                        <Typography variant="h5" fontWeight={700} sx={{ color: "#d9b36c" }}>
+                          {dailySummary.breakTime}
+                        </Typography>
+                      </Box>
+                    </Stack>
                   </Box>
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: {
-                        xs: "1fr",
-                        sm: "repeat(2, minmax(0, 1fr))",
-                        md: "repeat(3, minmax(0, 1fr))",
-                      },
-                      gap: 2,
-                    }}
-                  >
-                    {daySummaryStats.map((stat) => (
-                      <SummaryStatCard key={stat.id} icon={stat.icon} label={stat.label} value={stat.value} />
-                    ))}
+
+                  <Divider orientation="vertical" flexItem sx={{ display: { xs: "none", md: "block" } }} />
+
+                  {/* Coluna da Direita: Lista de Histórico */}
+                  <Box sx={{ flex: 2 }}>
+                    <Typography variant="h6" fontWeight={700} gutterBottom>
+                      Histórico de hoje
+                    </Typography>
+                    <Stack spacing={1}>
+                      {todayPoints.length === 0 && (
+                        <Typography color="text.secondary" variant="body2">
+                          Nenhum registro encontrado hoje.
+                        </Typography>
+                      )}
+                      {todayPoints.map((p) => (
+                        <Box
+                          key={p.id}
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            p: 1.5,
+                            border: "1px solid #f0f0f0",
+                            borderRadius: 2,
+                            alignItems: "center",
+                          }}
+                        >
+                          <Stack direction="row" spacing={1.5} alignItems="center">
+                            <Box
+                              sx={{
+                                width: 10,
+                                height: 10,
+                                borderRadius: "50%",
+                                bgcolor: historyDotColors[p.type],
+                              }}
+                            />
+                            <Typography sx={{ textTransform: "capitalize", fontWeight: 600 }}>
+                              {p.type}
+                            </Typography>
+                          </Stack>
+                          <Typography fontWeight={600} color="text.secondary">
+                            {formatHistoryTime(p.timestamp)}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Stack>
+
+                    <Box sx={{ mt: 2, textAlign: "right" }}>
+                      <MuiLink
+                        component={Link}
+                        href="/ponto/status"
+                        sx={{ fontWeight: 700, color: "#387d23", textDecoration: "none" }}
+                      >
+                        Ver histórico completo →
+                      </MuiLink>
+                    </Box>
                   </Box>
                 </Stack>
               </CardContent>
             </Card>
 
-            <Card sx={{ borderRadius: 4, boxShadow: "0px 10px 50px rgba(0,0,0,0.08)" }}>
-              <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-                <Stack spacing={3}>
-                  <Typography variant="h6" fontWeight={700}>
-                    Histórico de hoje
-                  </Typography>
-                  <HistoryList
-                    entries={historyListEntries}
-                    summaryText={todaySummary}
-                    footerLinkLabel="Ver status completo"
-                    footerLinkHref="/ponto/status"
-                  />
-                </Stack>
-              </CardContent>
-            </Card>
           </Stack>
         </Container>
       </Box>
